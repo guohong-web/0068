@@ -1,0 +1,716 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>前端基础 · 网站开发基础教程</title>
+<meta name="description" content="前端基础：HTML 语义化、CSS 布局、JavaScript 与 DOM、浏览器渲染原理、响应式设计、请求与跨域、构建工具与框架选型。">
+<link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body data-root="../">
+<div id="progress"></div>
+
+<header class="topbar">
+  <button class="topbar__burger" type="button" aria-label="打开导航">☰</button>
+  <a class="brand" href="../index.html">
+    <span class="brand__logo">W</span>
+    <span>网站开发基础教程</span>
+    <span class="brand__sub">Web Dev Handbook</span>
+  </a>
+  <div class="topbar__spacer"></div>
+  <nav class="topbar__nav">
+    <a href="../index.html">首页</a>
+    <a href="concepts.html">原理</a>
+    <a class="is-active" href="frontend.html">前端</a>
+    <a href="languages.html">后端</a>
+    <a href="architecture.html">搭建</a>
+    <a href="deployment.html">部署</a>
+    <a href="ops.html">运维</a>
+  </nav>
+  <button class="icon-btn" id="themeBtn" type="button" aria-label="切换主题">☾</button>
+</header>
+
+<div class="layout">
+  <aside class="sidebar" aria-label="章节导航"></aside>
+
+  <main class="content">
+    <span class="eyebrow">① 基础篇</span>
+    <h1>前端基础</h1>
+    <p class="lede">
+      前端的工作只有三件事：<b>描述结构</b>（HTML）、<b>描述样式</b>（CSS）、<b>描述行为</b>（JavaScript）。
+      框架、构建工具、状态管理都是这三件事的放大器。如果这三样不牢，任何框架都只是把问题藏得更深。
+    </p>
+
+    <div class="callout callout--info">
+      <span class="callout__ico">🧠</span>
+      <div>
+        <strong>先建立概念地图</strong>
+        <p>前端不是"写页面的技术"，而是<b>在别人的浏览器里运行的程序</b>。读本篇之前，建议先看原理篇的
+        <a href="concepts.html#web-model">请求—响应模型</a>（页面是怎么被送到用户面前的）、
+        <a href="concepts.html#rendering">渲染模式</a>（CSR/SSR/SSG 的性质与取舍），
+        以及术语词典的<a href="glossary.html#g-frontend">前端与浏览器</a>分类。
+        搞清这几个概念，后面的 DOM、虚拟 DOM、构建工具会变得顺理成章。</p>
+      </div>
+    </div>
+
+    <div class="callout callout--info">
+      <span class="callout__ico">🎯</span>
+      <div>
+        <strong>本篇学习目标</strong>
+        <p>能脱离教程手写一个响应式页面；能用原生 JS 操作 DOM 并发起接口请求；能说清"输入网址到页面出现"发生了什么。</p>
+      </div>
+    </div>
+
+    <h2 id="html">一、HTML：用语义描述结构</h2>
+    <p>
+      HTML 不是"画页面"的语言，而是"标注内容含义"的语言。浏览器、搜索引擎、屏幕阅读器都依赖标签的语义来理解你的页面。
+      一个常见误区是全部用 <code>&lt;div&gt;</code> 搭建 —— 能看，但可访问性和可维护性都极差。
+    </p>
+
+    <h3>标准页面骨架</h3>
+    <div class="code">
+      <div class="code__head"><span class="code__dots"><i></i><i></i><i></i></span><span class="code__lang">HTML</span></div>
+      <pre><code>&lt;!DOCTYPE html&gt;
+&lt;html lang="zh-CN"&gt;
+&lt;head&gt;
+  &lt;meta charset="UTF-8"&gt;
+  &lt;!-- 移动端必须：否则桌面宽度渲染后再缩放，字会很小 --&gt;
+  &lt;meta name="viewport" content="width=device-width, initial-scale=1.0"&gt;
+  &lt;title&gt;页面标题（搜索结果里显示的就是它）&lt;/title&gt;
+  &lt;meta name="description" content="页面摘要，搜索引擎会展示"&gt;
+  &lt;link rel="stylesheet" href="style.css"&gt;
+&lt;/head&gt;
+&lt;body&gt;
+  &lt;header&gt;导航与品牌&lt;/header&gt;
+  &lt;nav&gt;站点导航链接&lt;/nav&gt;
+  &lt;main&gt;
+    &lt;article&gt;
+      &lt;h1&gt;一篇有且仅有一个的主标题&lt;/h1&gt;
+      &lt;section&gt;
+        &lt;h2&gt;章节标题&lt;/h2&gt;
+        &lt;p&gt;正文段落&lt;/p&gt;
+      &lt;/section&gt;
+    &lt;/article&gt;
+    &lt;aside&gt;侧边相关内容&lt;/aside&gt;
+  &lt;/main&gt;
+  &lt;footer&gt;版权与备案号&lt;/footer&gt;
+  &lt;script src="app.js" defer&gt;&lt;/script&gt;
+&lt;/body&gt;
+&lt;/html&gt;</code></pre>
+    </div>
+
+    <h3>最常用的标签（覆盖 90% 场景）</h3>
+    <div class="table-wrap">
+      <table class="table-key">
+        <thead><tr><th>标签</th><th>含义</th><th>使用要点</th></tr></thead>
+        <tbody>
+          <tr><td>h1 ~ h6</td><td>标题层级</td><td>每页只有一个 h1；不要跳级（h2 后不要直接到 h4）</td></tr>
+          <tr><td>p / br</td><td>段落 / 换行</td><td>不要用多个 br 制造间距，用 CSS margin</td></tr>
+          <tr><td>a</td><td>超链接</td><td><code>target="_blank"</code> 时务必加 <code>rel="noopener"</code></td></tr>
+          <tr><td>ul / ol / li</td><td>无序 / 有序列表</td><td>导航菜单本质是 ul，不要用一堆 div</td></tr>
+          <tr><td>img</td><td>图片</td><td>必须写 <code>alt</code>；加 <code>loading="lazy"</code> 做懒加载</td></tr>
+          <tr><td>form + input</td><td>表单</td><td>每个 input 都要有 <code>label</code> 关联的 <code>for/id</code></td></tr>
+          <tr><td>button</td><td>按钮</td><td>默认可聚焦、可键盘触发，比 div 加 onclick 好得多</td></tr>
+          <tr><td>table</td><td>表格数据</td><td>只用于表格数据，不要用 table 做页面布局</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout callout--tip">
+      <span class="callout__ico">✅</span>
+      <div>
+        <strong>语义化最大的实际收益</strong>
+        <p>表单可访问性直接影响转化率：label 正确关联后，点击文字就能聚焦输入框，移动端体验显著变好。而搜索引擎抓取时，<code>&lt;main&gt;</code>、<code>&lt;article&gt;</code> 里的正文权重高于一堆 div 里的文本。</p>
+      </div>
+    </div>
+
+    <h2 id="css">二、CSS：布局与样式</h2>
+    <p>
+      CSS 的三大块：<b>选择器</b>决定"改谁"，<b>盒模型</b>决定"多大"，<b>布局模式</b>决定"怎么排"。
+      现代前端完全可以只用 Flex + Grid 完成所有布局，<code>float</code> 和 <code>position</code> 的复杂用法已经不需要了。
+    </p>
+
+    <h3>盒模型与 box-sizing</h3>
+    <p>
+      默认情况下 <code>width</code> 只算内容区，加上 padding 和 border 会让元素实际变宽 —— 这是新手最常见的布局错乱原因。
+      一条全局规则可以永久解决它：
+    </p>
+    <div class="code">
+      <div class="code__head"><span class="code__dots"><i></i><i></i><i></i></span><span class="code__lang">CSS · 建议每个项目先写这段</span></div>
+      <pre><code>*, *::before, *::after {
+  box-sizing: border-box;   /* width 包含 padding 和 border */
+}
+
+:root {
+  /* 用变量统一管理设计令牌，改一处全站生效 */
+  --brand: #4f46e5;
+  --radius: 12px;
+  --space: 16px;
+}
+
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, "PingFang SC", sans-serif;
+  line-height: 1.7;
+  color: #1a1a1a;
+  background: #fff;
+}
+
+/* 深色模式：媒体查询 + CSS 变量是最省事的方案 */
+@media (prefers-color-scheme: dark) {
+  body { color: #e8e8e8; background: #111; }
+}</code></pre>
+    </div>
+
+    <h3>Flexbox：一维排列</h3>
+    <p>适用场景：导航栏、按钮组、卡片内元素垂直居中、等高列。记住"主轴 / 交叉轴"两个概念就够了。</p>
+    <div class="code">
+      <div class="code__head"><span class="code__dots"><i></i><i></i><i></i></span><span class="code__lang">CSS · 五个高频配方</span></div>
+      <pre><code>/* 1. 水平两端对齐的导航栏 */
+.navbar { display: flex; align-items: center; justify-content: space-between; }
+
+/* 2. 垂直水平居中（最经典的需求） */
+.center { display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+
+/* 3. 左侧固定 + 右侧自适应撑满 */
+.layout { display: flex; }
+.side  { flex: 0 0 260px; }          /* 不放大不缩小，固定 260px */
+.main  { flex: 1 1 auto; min-width: 0; }  /* min-width:0 防止内容撑破 */
+
+/* 4. 卡片网格自动换行 */
+.cards { display: flex; flex-wrap: wrap; gap: 16px; }
+.cards > * { flex: 1 1 240px; }
+
+/* 5. 空间不够时自动换行，且让最后一行左对齐 */
+.tags { display: flex; flex-wrap: wrap; gap: 8px; }</code></pre>
+    </div>
+
+    <h3>Grid：二维布局</h3>
+    <p>适用场景：整页布局、图片墙、表单字段对齐。<code>repeat(auto-fit, minmax())</code> 是响应式网格的万能公式，一行代码替代一堆媒体查询。</p>
+    <div class="code">
+      <div class="code__head"><span class="code__dots"><i></i><i></i><i></i></span><span class="code__lang">CSS</span></div>
+      <pre><code>/* 卡片列表：宽度不足 240px 时自动减少列数，无需媒体查询 */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px;
+}
+
+/* 整页三栏布局：侧栏 | 内容 | 目录 */
+.page {
+  display: grid;
+  grid-template-columns: 260px minmax(0, 1fr) 200px;
+  gap: 0;
+  align-items: start;
+}
+
+/* 移动端降级为单列 */
+@media (max-width: 900px) {
+  .page { grid-template-columns: 1fr; }
+}</code></pre>
+    </div>
+
+    <div class="callout callout--warn">
+      <span class="callout__ico">⚠️</span>
+      <div>
+        <strong>CSS 优先级与选择器污染</strong>
+        <p>优先级顺序：<code>!important</code> &gt; 行内样式 &gt; ID &gt; 类/属性/伪类 &gt; 标签。写 CSS 时优先使用<b>单层类选择器</b>，避免 <code>div .a .b .c</code> 这种长链 —— 它让样式无法复用，且后期只能靠 <code>!important</code> 打补丁。</p>
+        <p>大型项目建议引入命名约定（BEM）或使用 CSS Modules / Tailwind 等方案从机制上避免冲突。</p>
+      </div>
+    </div>
+
+    <h2 id="js">三、JavaScript：行为与数据</h2>
+    <p>
+      后端开发者用 JS，前端也用它。入门阶段的核心是：变量与类型、函数、数组方法、对象、异步（Promise / async-await）、DOM 操作。
+      其中<b>异步</b>是最重要的分水岭 —— 不理解它，就无法理解网络请求。
+    </p>
+
+    <h3>必须掌握的数组方法</h3>
+    <p>现代 JS 中，<code>for</code> 循环处理数据的场景大部分已被这些声明式方法取代，代码更短且不易出错。</p>
+    <div class="code">
+      <div class="code__head"><span class="code__dots"><i></i><i></i><i></i></span><span class="code__lang">JavaScript</span></div>
+      <pre><code>const users = [
+  { id: 1, name: '张三', age: 24, active: true },
+  { id: 2, name: '李四', age: 31, active: false },
+  { id: 3, name: '王五', age: 28, active: true }
+];
+
+users.map(u =&gt; u.name);                       // ['张三','李四','王五'] 映射
+users.filter(u =&gt; u.active);                  // 只保留 active 为 true 的
+users.find(u =&gt; u.id === 2);                  // 找第一个匹配项，找不到返回 undefined
+users.some(u =&gt; u.age &gt; 30);                  // 是否存在满足条件项 → true
+users.every(u =&gt; u.age &gt; 20);                 // 是否全部满足 → true
+users.reduce((sum, u) =&gt; sum + u.age, 0);     // 聚合计算 → 83
+[...users].sort((a, b) =&gt; a.age - b.age);     // 排序（注意会改原数组，先复制）
+users.map(u =&gt; ({ ...u, vip: u.age &gt; 30 }));   // 展开运算符生成新对象</code></pre>
+    </div>
+
+    <h3>DOM 操作与事件委托</h3>
+    <p>DOM 是浏览器把 HTML 解析成的一棵对象树。JS 通过它读取和修改页面。</p>
+    <div class="code">
+      <div class="code__head"><span class="code__dots"><i></i><i></i><i></i></span><span class="code__lang">JavaScript · DOM 与事件委托</span></div>
+      <pre><code>// 查询（querySelector 返回第一个，querySelectorAll 返回 NodeList）
+const list = document.querySelector('#todo-list');
+const input = document.querySelector('#todo-input');
+
+// 创建与插入
+function addItem(text) {
+  const li = document.createElement('li');
+  li.className = 'item';
+  li.dataset.id = Date.now();        // 写入 data-id 属性
+  li.textContent = text;             // 用 textContent 而非 innerHTML，天然防 XSS
+  list.appendChild(li);
+}
+
+// 事件委托：只在父元素上挂一个监听器，处理所有子元素点击
+// 优点：新增的子元素自动拥有事件，且省内存
+list.addEventListener('click', (e) =&gt; {
+  const item = e.target.closest('.item');
+  if (!item) return;                 // 点在空白处直接返回
+  if (e.target.matches('.del')) item.remove();
+});
+
+// 表单提交：一定要 preventDefault，否则页面会刷新
+document.querySelector('#todo-form').addEventListener('submit', (e) =&gt; {
+  e.preventDefault();
+  const v = input.value.trim();
+  if (!v) return;
+  addItem(v);
+  input.value = '';
+});</code></pre>
+    </div>
+
+    <h3>异步：从回调到 async/await</h3>
+    <p>网络请求需要时间，JS 不会停下来等它。下面三种写法是同一件事的演进，理解它们的差别就理解了异步的本质。</p>
+    <div class="code">
+      <div class="code__head"><span class="code__dots"><i></i><i></i><i></i></span><span class="code__lang">JavaScript · 三种异步风格</span></div>
+      <pre><code>// ① 回调式（老写法，容易嵌套成"回调地狱"）
+fetchUser(1, (err, user) =&gt; {
+  if (err) return handle(err);
+  fetchOrders(user.id, (err2, orders) =&gt; { /* 越嵌越深 */ });
+});
+
+// ② Promise 链
+fetch('/api/users/1')
+  .then(res =&gt; {
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    return res.json();
+  })
+  .then(user =&gt; console.log(user.name))
+  .catch(err =&gt; console.error('请求失败：', err))
+  .finally(() =&gt; hideLoading());
+
+// ③ async/await（推荐，同步写法表达异步逻辑）
+async function loadUser(id) {
+  try {
+    const res = await fetch('/api/users/' + id);
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const user = await res.json();
+    return user;
+  } catch (err) {
+    console.error('加载用户失败：', err);
+    throw err;                       // 交给调用方处理
+  }
+}
+
+// 并发请求：Promise.all 等全部完成，比串行快很多
+const [user, orders, stats] = await Promise.all([
+  fetch('/api/user').then(r =&gt; r.json()),
+  fetch('/api/orders').then(r =&gt; r.json()),
+  fetch('/api/stats').then(r =&gt; r.json())
+]);</code></pre>
+    </div>
+
+    <div class="callout callout--danger">
+      <span class="callout__ico">🚫</span>
+      <div>
+        <strong>两个必须避免的写法</strong>
+        <p><b>innerHTML 拼接用户输入</b>：<code>el.innerHTML = '&lt;b&gt;' + userInput + '&lt;/b&gt;'</code> 是 XSS 漏洞的经典来源。用 <code>textContent</code>。</p>
+        <p><b>用 var 和 ==</b>：统一用 <code>const</code>（默认）和 <code>let</code>（需要重新赋值），比较一律用 <code>===</code>。</p>
+      </div>
+    </div>
+
+    <h2 id="render">四、浏览器渲染与关键指标</h2>
+    <p>
+      浏览器收到 HTML 后，需要把它变成屏幕上像素。理解这条流水线，才知道 CSS 写在哪、脚本放哪里、为什么会有首屏白屏。
+    </p>
+    <div class="flow">
+      <span>HTML</span><i>→</i>
+      <span class="on">构建 DOM</span><i>→</i>
+      <span>构建 CSSOM</span><i>→</i>
+      <span>合成渲染树</span><i>→</i>
+      <span>布局 Layout</span><i>→</i>
+      <span>绘制 Paint</span><i>→</i>
+      <span>合成 Composite</span>
+    </div>
+
+    <ul class="plain-list">
+      <li><span class="k">阻塞渲染</span><span>CSS 会阻塞渲染；普通 <code>&lt;script&gt;</code> 会阻塞解析。脚本放 body 末尾或加 <code>defer</code>。</span></li>
+      <li><span class="k">重排 Reflow</span><span>改变尺寸/位置（改 width、加元素）会触发，代价高。批量修改后一次性写入 DOM。</span></li>
+      <li><span class="k">重绘 Repaint</span><span>只改颜色/背景，代价较低。</span></li>
+      <li><span class="k">合成层</span><span><code>transform</code> / <code>opacity</code> 动画可只走合成，不掉帧。动画优先用这两个属性。</span></li>
+    </ul>
+
+    <h3>三个核心性能指标</h3>
+    <div class="table-wrap">
+      <table class="table-key">
+        <thead><tr><th>指标</th><th>含义</th><th>良好阈值</th></tr></thead>
+        <tbody>
+          <tr><td>LCP</td><td>最大内容元素绘制时间（首屏主内容出现）</td><td>&lt; 2.5s</td></tr>
+          <tr><td>INP</td><td>用户交互到页面响应的延迟</td><td>&lt; 200ms</td></tr>
+          <tr><td>CLS</td><td>布局偏移（页面元素乱跳的程度）</td><td>&lt; 0.1</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="code">
+      <div class="code__head"><span class="code__dots"><i></i><i></i><i></i></span><span class="code__lang">JavaScript · 用代码采集真实用户指标</span></div>
+      <pre><code>// 在真实用户的浏览器里测量，比实验室数据更可信
+new PerformanceObserver((list) =&gt; {
+  for (const entry of list.getEntries()) {
+    console.log('LCP:', Math.round(entry.startTime), 'ms',
+                '元素:', entry.element?.tagName);
+  }
+}).observe({ type: 'largest-contentful-paint', buffered: true });
+
+// 布局偏移累计值
+let cls = 0;
+new PerformanceObserver((list) =&gt; {
+  for (const e of list.getEntries()) {
+    if (!e.hadRecentInput) cls += e.value;
+  }
+  console.log('CLS:', cls.toFixed(3));
+}).observe({ type: 'layout-shift', buffered: true });</code></pre>
+    </div>
+
+    <p class="muted">避免 CLS 的实用手段：给 <code>&lt;img&gt;</code> 写死 <code>width</code>/<code>height</code> 或 <code>aspect-ratio</code>；字体用 <code>font-display: swap</code>；不要在首屏内容上方插入动态广告位。</p>
+
+    <h2 id="responsive">五、响应式设计</h2>
+    <p>响应式的核心不是"做两套页面"，而是<b>一套内容在不同宽度下自动重排</b>。移动端优先（Mobile First）是主流策略：先写小屏样式，再用 <code>min-width</code> 逐步增强。</p>
+
+    <div class="code">
+      <div class="code__head"><span class="code__dots"><i></i><i></i><i></i></span><span class="code__lang">CSS · 移动优先的断点体系</span></div>
+      <pre><code>/* 基础样式 = 手机（宽度最小的情况） */
+.container { padding: 16px; }
+
+/* 平板及以上 */
+@media (min-width: 640px) {
+  .container { padding: 24px; }
+}
+
+/* 桌面 */
+@media (min-width: 1024px) {
+  .container { max-width: 1100px; margin: 0 auto; padding: 32px; }
+}
+
+/* 内容自适应：图片不溢出容器，文字也不撑破 */
+img, video { max-width: 100%; height: auto; }
+.long-word { overflow-wrap: anywhere; }
+
+/* 用 clamp() 让字号随视口平滑变化，替代阶梯式断点 */
+h1 { font-size: clamp(1.6rem, 4vw, 2.6rem); }
+
+/* 用容器查询做组件级响应式（现代浏览器已支持） */
+.card-wrap { container-type: inline-size; }
+@container (min-width: 420px) {
+  .card { display: flex; gap: 14px; }
+}</code></pre>
+    </div>
+
+    <div class="callout callout--tip">
+      <span class="callout__ico">📱</span>
+      <div>
+        <strong>触屏适配三件事</strong>
+        <p>① 可点击区域至少 44×44 px；② 输入框 <code>font-size</code> 不要小于 16px（否则 iOS Safari 会自动放大页面）；③ 慎用 <code>hover</code> 承载关键信息，触屏没有 hover 状态。</p>
+      </div>
+    </div>
+
+    <h2 id="request">六、与后端通信：请求与跨域</h2>
+    <p>前端拿到数据的方式基本只有 <code>fetch</code>。理解请求方法、状态码、跨域和鉴权，是打通前后端的关键。</p>
+
+    <div class="code">
+      <div class="code__head"><span class="code__dots"><i></i><i></i><i></i></span><span class="code__lang">JavaScript · 一个够用的请求封装</span></div>
+      <pre><code>const BASE = '/api';
+
+async function request(path, { method = 'GET', body, headers = {} } = {}) {
+  const opts = { method, headers: { ...headers } };
+
+  if (body !== undefined) {
+    opts.headers['Content-Type'] = 'application/json';
+    opts.body = JSON.stringify(body);
+  }
+
+  // 用 Cookie 携带会话时需开启；用 Bearer Token 则从 localStorage 读取
+  opts.credentials = 'same-origin';
+  const token = localStorage.getItem('token');
+  if (token) opts.headers.Authorization = 'Bearer ' + token;
+
+  const res = await fetch(BASE + path, opts);
+
+  // 401 统一处理：token 过期，跳登录
+  if (res.status === 401) {
+    localStorage.removeItem('token');
+    location.href = '/login?next=' + encodeURIComponent(location.pathname);
+    return null;
+  }
+
+  const data = res.status === 204 ? null : await res.json().catch(() =&gt; null);
+  if (!res.ok) throw new Error((data &amp;&amp; data.message) || ('HTTP ' + res.status));
+  return data;
+}
+
+// 使用
+const users = await request('/users?page=1');
+await request('/users', { method: 'POST', body: { name: '张三' } });
+await request('/users/1', { method: 'DELETE' });</code></pre>
+    </div>
+
+    <h3>跨域（CORS）为什么会出现</h3>
+    <p>浏览器有同源策略：协议、域名、端口三者任一不同即为跨域，默认禁止读取响应。<b>这是浏览器行为，不是服务器拒绝了请求</b>（请求其实发出去了）。</p>
+    <div class="table-wrap">
+      <table class="table-key">
+        <thead><tr><th>方案</th><th>做法</th><th>适用场景</th></tr></thead>
+        <tbody>
+          <tr><td>后端加响应头</td><td><code>Access-Control-Allow-Origin</code> 等</td><td>接口开放给指定前端域名，最正规</td></tr>
+          <tr><td>反向代理</td><td>Nginx 把 <code>/api</code> 转发到后端服务</td><td>生产环境首选，同源且无需 CORS</td></tr>
+          <tr><td>开发代理</td><td>Vite <code>server.proxy</code> 转发</td><td>本地开发模拟线上同源</td></tr>
+          <tr><td>JSONP</td><td>用 script 标签绕过</td><td>仅 GET，已是历史遗留方案</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="code">
+      <div class="code__head"><span class="code__dots"><i></i><i></i><i></i></span><span class="code__lang">JavaScript · vite.config.js 开发代理</span></div>
+      <pre><code>import { defineConfig } from 'vite';
+
+export default defineConfig({
+  server: {
+    port: 5173,
+    proxy: {
+      // 前端请求 /api/users → 实际转发到 http://localhost:3000/users
+      '/api': {
+        target: 'http://localhost:3000',
+        changeOrigin: true,
+        rewrite: (p) =&gt; p.replace(/^\/api/, '')
+      }
+    }
+  }
+});</code></pre>
+    </div>
+
+    <div class="callout callout--warn">
+      <span class="callout__ico">⚠️</span>
+      <div>
+        <strong>带 Cookie 的跨域请求</strong>
+        <p>若使用 Cookie 鉴权，前端必须设置 <code>credentials: 'include'</code>，后端必须返回 <code>Access-Control-Allow-Credentials: true</code>，且 <code>Allow-Origin</code> <b>不能是 <code>*</code></b>，必须写明确域名。同时 Cookie 要设 <code>SameSite=None; Secure</code>。这也是"生产环境更推荐反向代理同源部署"的原因 —— 少一堆配置坑。</p>
+      </div>
+    </div>
+
+    <h2 id="tooling">七、构建工具与工程化</h2>
+    <p>当页面超过三五个文件，就需要工具链解决：模块化、语法降级、代码压缩、热更新。现代方案已经很简单。</p>
+
+    <div class="code">
+      <div class="code__head"><span class="code__dots"><i></i><i></i><i></i></span><span class="code__lang">Bash · 从零创建一个前端项目</span></div>
+      <pre><code># 用 Vite 创建（当前最主流的构建工具，启动快）
+npm create vite@latest my-app -- --template react
+cd my-app
+npm install
+npm run dev      # 开发服务器，改代码秒级热更新
+npm run build    # 产出 dist/ 目录，这是要部署的东西
+npm run preview  # 本地预览生产构建结果
+
+# 目录结构说明
+# index.html      入口 HTML，构建工具以它为起点
+# src/main.jsx    应用入口
+# src/App.jsx     根组件
+# vite.config.js  构建配置
+# dist/           构建产物（不要提交到 Git）</code></pre>
+    </div>
+
+    <h3>包管理器：npm / pnpm / yarn</h3>
+    <ul class="plain-list">
+      <li><span class="k">npm</span><span>Node.js 自带，够用。用 <code>npm ci</code> 在 CI 中按 lock 文件精确安装。</span></li>
+      <li><span class="k">pnpm</span><span>磁盘占用小、安装快，多个项目共享依赖。大项目推荐。</span></li>
+      <li><span class="k">yarn</span><span>历史项目常见，新项目不必特意选它。</span></li>
+    </ul>
+
+    <div class="callout callout--info">
+      <span class="callout__ico">📌</span>
+      <div>
+        <strong>关于 lock 文件</strong>
+        <p><code>package-lock.json</code> / <code>pnpm-lock.yaml</code> <b>必须提交到 Git</b>。它锁定了每个依赖的确切版本，是"本地能跑、线上也能跑"的保证。只在 <code>package.json</code> 里写 <code>^1.2.3</code> 而丢掉 lock 文件，某天依赖发新版就会直接构建失败。</p>
+      </div>
+    </div>
+
+    <h2 id="framework">八、框架怎么选</h2>
+    <p>框架解决的核心问题是：<b>状态变化时如何高效更新 DOM</b>。原生写法需要手动找到元素再改，框架让你只描述"数据长这样，界面就长这样"。</p>
+
+    <div class="tabs">
+      <div class="tabs__bar" role="tablist">
+        <button class="tab-btn is-active" role="tab" aria-selected="true" type="button">Vue</button>
+        <button class="tab-btn" role="tab" aria-selected="false" type="button">React</button>
+        <button class="tab-btn" role="tab" aria-selected="false" type="button">原生 / 轻量</button>
+      </div>
+
+      <div class="tab-panel is-active">
+        <p><b>Vue 3</b>：中文文档质量极高，模板语法贴近 HTML，上手曲线最平缓。国内生态与招聘友好。</p>
+        <div class="code">
+          <div class="code__head"><span class="code__lang">Vue · 计数器组件</span></div>
+          <pre><code>&lt;script setup&gt;
+import { ref, computed } from 'vue';
+
+const count = ref(0);                      // 响应式状态
+const double = computed(() =&gt; count.value * 2);
+&lt;/script&gt;
+
+&lt;template&gt;
+  &lt;button @click="count--"&gt;-&lt;/button&gt;
+  &lt;span&gt;{{ count }}（两倍：{{ double }}）&lt;/span&gt;
+  &lt;button @click="count++"&gt;+&lt;/button&gt;
+&lt;/template&gt;
+
+&lt;style scoped&gt;
+span { margin: 0 10px; font-variant-numeric: tabular-nums; }
+&lt;/style&gt;</code></pre>
+        </div>
+      </div>
+
+      <div class="tab-panel">
+        <p><b>React</b>：生态最大、岗位最多，全部用 JavaScript 表达（JSX）。概念上更"函数式"，学习曲线略陡。</p>
+        <div class="code">
+          <div class="code__head"><span class="code__lang">React · 同一个计数器</span></div>
+          <pre><code>import { useState, useMemo } from 'react';
+
+export default function Counter() {
+  const [count, setCount] = useState(0);
+  const double = useMemo(() =&gt; count * 2, [count]);
+
+  return (
+    &lt;div style={{ display: 'flex', gap: 10, alignItems: 'center' }}&gt;
+      &lt;button onClick={() =&gt; setCount(c =&gt; c - 1)}&gt;-&lt;/button&gt;
+      &lt;span&gt;{count}（两倍：{double}）&lt;/span&gt;
+      &lt;button onClick={() =&gt; setCount(c =&gt; c + 1)}&gt;+&lt;/button&gt;
+    &lt;/div&gt;
+  );
+}</code></pre>
+        </div>
+      </div>
+
+      <div class="tab-panel">
+        <p>不是所有页面都需要框架。内容型站点、后台表单少的小工具，用原生 JS + Web Components 或 Alpine.js / htmx 反而更轻、更快、更好维护。</p>
+        <div class="code">
+          <div class="code__head"><span class="code__lang">原生 · 用模板标签写组件</span></div>
+          <pre><code>&lt;!-- 定义在 HTML 中，浏览器原生支持，无需构建 --&gt;
+&lt;template id="user-card"&gt;
+  &lt;style&gt;
+    :host { display: block; border: 1px solid #e5e7eb; border-radius: 10px; padding: 12px; }
+    .name { font-weight: 600; }
+  &lt;/style&gt;
+  &lt;div class="name"&gt;&lt;/div&gt;
+  &lt;div class="age"&gt;&lt;/div&gt;
+&lt;/template&gt;
+
+&lt;script&gt;
+class UserCard extends HTMLElement {
+  static get observedAttributes() { return ['name', 'age']; }
+  constructor() {
+    super();
+    this.attachShadow({ mode: 'open' })
+      .appendChild(document.getElementById('user-card').content.cloneNode(true));
+  }
+  attributeChangedCallback() {
+    const r = this.shadowRoot;
+    r.querySelector('.name').textContent = this.getAttribute('name') || '';
+    r.querySelector('.age').textContent = (this.getAttribute('age') || '') + ' 岁';
+  }
+}
+customElements.define('user-card', UserCard);
+&lt;/script&gt;
+
+&lt;user-card name="张三" age="24"&gt;&lt;/user-card&gt;</code></pre>
+        </div>
+      </div>
+    </div>
+
+    <div class="table-wrap">
+      <table class="table-key">
+        <thead><tr><th>你的情况</th><th>推荐</th><th>理由</th></tr></thead>
+        <tbody>
+          <tr><td>零基础、要快速见效</td><td>原生三件套</td><td>先建立"请求 → 渲染"的完整认知</td></tr>
+          <tr><td>要找工作、目标大厂</td><td>React</td><td>岗位量与生态最大</td></tr>
+          <tr><td>国内中小团队、快速交付</td><td>Vue 3</td><td>文档友好、上手快、组件库丰富</td></tr>
+          <tr><td>内容站 / 博客 / 文档</td><td>Astro、Next.js 静态导出</td><td>产出纯静态，性能与 SEO 最佳</td></tr>
+          <tr><td>已有后端渲染页面、只想加点交互</td><td>Alpine.js、htmx</td><td>无需构建，两行代码搞定</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2 id="practice">九、动手练习</h2>
+    <p>以下三个练习按顺序做，全部手写（可查文档，不看视频跟做），完成后前端基础就过关了。</p>
+    <ul class="checklist">
+      <li><b>静态还原</b>：找一个你喜欢的网站截图，用 HTML + CSS 还原首屏。要求：语义化标签、无 float、移动端可用。</li>
+      <li><b>待办清单</b>：用原生 JS 实现增删改查 + 本地存储持久化（localStorage）。要求：事件委托、不用 innerHTML 插入用户内容。</li>
+      <li><b>接真实接口</b>：调用任意公开 API（如 GitHub 用户接口），做一个"输入用户名 → 展示头像和仓库列表"的页面，含加载中、空状态、错误状态三种 UI。</li>
+    </ul>
+
+    <div class="callout callout--info">
+      <span class="callout__ico">🧭</span>
+      <div>
+        <strong>下一步</strong>
+        <p>页面上的数据从哪来？接口是谁写的？接下来看 <a href="languages.html">后端语言选型</a>，选一门语言把"服务端"这半边补齐。</p>
+      </div>
+    </div>
+
+    <div class="pager">
+      <a class="prev" href="../index.html"><span>返回</span><b>← 教程首页</b></a>
+      <a class="next" href="languages.html"><span>下一篇</span><b>后端语言选型 →</b></a>
+    </div>
+  </main>
+
+  <aside class="toc" aria-label="本页目录"></aside>
+</div>
+
+<div class="mask"></div>
+
+<footer class="footer">
+  <div class="footer__grid">
+    <div>
+      <h5>基础篇</h5>
+      <ul>
+        <li><a href="frontend.html">前端基础</a></li>
+        <li><a href="languages.html">后端语言选型</a></li>
+      </ul>
+    </div>
+    <div>
+      <h5>工程篇</h5>
+      <ul>
+        <li><a href="architecture.html">搭建思路</a></li>
+        <li><a href="deployment.html">部署思路</a></li>
+        <li><a href="ops.html">运维思路</a></li>
+      </ul>
+    </div>
+    <div>
+      <h5>本页速查</h5>
+      <ul>
+        <li><a href="#css">Flex / Grid 配方</a></li>
+        <li><a href="#js">数组与异步方法</a></li>
+        <li><a href="#request">请求封装与跨域</a></li>
+      </ul>
+    </div>
+    <div>
+      <h5>关于</h5>
+      <ul>
+        <li><a href="../index.html#principles">六条核心原则</a></li>
+        <li><a href="../index.html#faq">常见问题</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="footer__bottom">
+    <span>网站开发基础教程 · 前端基础</span>
+    <span>快捷键 <code>/</code> 搜索章节</span>
+  </div>
+</footer>
+
+<script src="../assets/js/main.js"></script>
+</body>
+</html>

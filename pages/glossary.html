@@ -1,0 +1,1190 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>专业术语词典 · 网站开发基础教程</title>
+<meta name="description" content="网站开发专业术语词典：网络与协议、前端与浏览器、语言与运行时、数据库、架构、部署运维、安全，共 180+ 词条，每条含定义与为什么重要。">
+<link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body data-root="../">
+<div id="progress"></div>
+
+<header class="topbar">
+  <button class="topbar__burger" type="button" aria-label="打开导航">☰</button>
+  <a class="brand" href="../index.html">
+    <span class="brand__logo">W</span>
+    <span>网站开发基础教程</span>
+    <span class="brand__sub">Web Dev Handbook</span>
+  </a>
+  <div class="topbar__spacer"></div>
+  <nav class="topbar__nav">
+    <a href="../index.html">首页</a>
+    <a href="concepts.html">原理</a>
+    <a href="frontend.html">前端</a>
+    <a href="languages.html">后端</a>
+    <a href="architecture.html">搭建</a>
+    <a href="deployment.html">部署</a>
+    <a href="ops.html">运维</a>
+  </nav>
+  <button class="icon-btn" id="themeBtn" type="button" aria-label="切换主题">☾</button>
+</header>
+
+<div class="layout">
+  <aside class="sidebar" aria-label="章节导航"></aside>
+
+  <main class="content">
+    <span class="eyebrow">📖 查阅 · 全站通用</span>
+    <h1>专业术语词典</h1>
+    <p class="lede">
+      学网站开发最大的门槛不是语法，而是<b>名词</b>。教程、文档、面试、同事沟通里反复出现的那些词，
+      如果只记住了名字而没有理解它的<b>定义</b>与<b>为什么要存在</b>，就会一直处在"好像懂但说不清"的状态。
+      这份词典把全站出现的专业词按领域收齐，每条给出「是什么」和「为什么重要」。
+    </p>
+
+    <div class="callout callout--tip">
+      <span class="callout__ico">💡</span>
+      <div>
+        <strong>怎么用</strong>
+        <p>① 按领域浏览，适合系统建立概念地图；② 用左侧搜索框搜词（快捷键 <code>/</code>），适合遇到不懂的词随时查；
+        ③ 先读最后一节<a href="#confusing">最容易混淆的 12 组概念</a>，那里集中解决最高频的理解错误。</p>
+      </div>
+    </div>
+
+    <div class="index-bar">
+      <a href="#g-network">网络与协议</a>
+      <a href="#g-frontend">前端与浏览器</a>
+      <a href="#g-lang">语言与运行时</a>
+      <a href="#g-db">数据库</a>
+      <a href="#g-arch">架构</a>
+      <a href="#g-deploy">部署与运维</a>
+      <a href="#g-security">安全</a>
+      <a href="#confusing">概念辨析</a>
+    </div>
+
+    <!-- ============================================================ -->
+    <h2 id="g-network">一、网络与协议</h2>
+    <div class="gloss-list">
+
+      <div class="gloss-entry">
+        <div class="gloss-entry__head"><span class="gloss-entry__term">互联网</span><span class="gloss-entry__en">Internet</span></div>
+        <p class="gloss-entry__def">全球互联的计算机网络，本质是"网络的网络"——无数个局域网通过路由器互相连接，共同使用 IP 协议寻址。</p>
+        <p class="gloss-entry__why">它提供的是"能互相找到并传输数据"的底层能力，不关心上面跑什么应用。</p>
+      </div>
+
+      <div class="gloss-entry">
+        <div class="gloss-entry__head"><span class="gloss-entry__term">万维网</span><span class="gloss-entry__en">WWW, World Wide Web</span></div>
+        <p class="gloss-entry__def">运行在互联网之上的一个应用系统，由 URL 标识资源、HTTP 传输资源、HTML 描述资源三部分构成。</p>
+        <p class="gloss-entry__why">区分"互联网"与"万维网"很重要：前者是公路，后者是公路上跑的一种车。网站开发做的是后者。</p>
+      </div>
+
+      <div class="gloss-entry">
+        <div class="gloss-entry__head"><span class="gloss-entry__term">协议</span><span class="gloss-entry__en">Protocol</span></div>
+        <p class="gloss-entry__def">通信双方约定的规则集合，规定数据的格式、顺序与含义。</p>
+        <p class="gloss-entry__why">所有"打不开""连不上"的问题，最终都能归结为某一层的协议没有被正确遵守。</p>
+      </div>
+
+      <div class="gloss-entry">
+        <div class="gloss-entry__head"><span class="gloss-entry__term">客户端与服务器</span><span class="gloss-entry__en">Client / Server</span></div>
+        <p class="gloss-entry__def">客户端是主动发起请求的一方（浏览器、App），服务器是被动等待并响应的一方。</p>
+        <p class="gloss-entry__why">这个划分引出安全的第一原则：客户端环境不可信，所有校验与权限判断必须在服务端完成。</p>
+      </div>
+
+      <div class="gloss-entry">
+        <div class="gloss-entry__head"><span class="gloss-entry__term">IP 地址</span><span class="gloss-entry__en">IP Address</span></div>
+        <p class="gloss-entry__def">网络中一台机器的数字编号，如 <code>93.184.216.34</code>（IPv4）或更长的 IPv6 地址。</p>
+        <p class="gloss-entry__why">它是网络层寻址的唯一依据。公网 IP 与内网 IP 的区别决定了哪些服务能被外网访问。</p>
+      </div>
+
+      <div class="gloss-entry">
+        <div class="gloss-entry__head"><span class="gloss-entry__term">端口</span><span class="gloss-entry__en">Port</span></div>
+        <p class="gloss-entry__def">0～65535 的数字，用来区分同一台机器上的不同程序。HTTP 默认 80，HTTPS 默认 443，MySQL 默认 3306。</p>
+        <p class="gloss-entry__why">"服务器被入侵"经常就是某个不该对外开放的端口（数据库、Redis）暴露在外网。</p>
+      </div>
+
+      <div class="gloss-entry">
+        <div class="gloss-entry__head"><span class="gloss-entry__term">域名</span><span class="gloss-entry__en">Domain</span></div>
+        <p class="gloss-entry__def">IP 地址的人类可读别名，按层级组织：<code>api.example.com</code> 中 <code>.com</code> 是顶级域，<code>example</code> 是二级域，<code>api</code> 是子域。</p>
+        <p class="gloss-entry__why">它是"流量的总开关"。换服务器、做灰度、上 CDN、拆分前后端，全都是在域名与解析上做文章。</p>
+      </div>
+
+      <div class="gloss-entry">
+        <div class="gloss-entry__head"><span class="gloss-entry__term">DNS</span><span class="gloss-entry__en">Domain Name System</span></div>
+        <p class="gloss-entry__def">把域名解析成 IP 地址的全球分布式数据库，采用分层授权（根 → 顶级域 → 权威服务器）与多级缓存。</p>
+        <p class="gloss-entry__why">解析出错时表现为"域名打不开但用 IP 能打开"，是排查线上问题的第一站。</p>
+      </div>
+
+      <div class="gloss-entry">
+        <div class="gloss-entry__head"><span class="gloss-entry__term">DNS 记录</span><span class="gloss-entry__en">A / CNAME / MX / TXT</span></div>
+        <p class="gloss-entry__def"><b>A</b> 指向一个 IP；<b>AAAA</b> 指向 IPv6；<b>CNAME</b> 指向另一个域名（常用于接入 CDN/托管平台）；<b>MX</b> 指定邮件服务器；<b>TXT</b> 存验证信息。</p>
+        <p class="gloss-entry__why">部署时选错记录类型是最常见的低级错误（例如根域名不能直接加 CNAME）。</p>
+      </div>
+
+      <div class="gloss-entry">
+        <div class="gloss-entry__head"><span class="gloss-entry__term">TTL</span><span class="gloss-entry__en">Time To Live</span></div>
+        <p class="gloss-entry__def">DNS 记录被允许缓存的时间（秒）。TTL=600 表示各地 DNS 最多缓存 10 分钟。</p>
+        <p class="gloss-entry__why">它决定了"改了解析多久才生效"。切换服务器前先把 TTL 调小，可以做到近乎无缝迁移。</p>
+      </div>
+
+      <div class="gloss-entry">
+        <div class="gloss-entry__head"><span class="gloss-entry__term">URL</span><span class="gloss-entry__en">Uniform Resource Locator</span></div>
+        <p class="gloss-entry__def">统一资源定位符，由协议、主机、端口、路径、查询串、片段六部分组成。</p>
+        <p class="gloss-entry__why">服务端路由、缓存键、日志统计、权限校验都以它为基准，所以 URL 设计是接口设计的第一步。</p>
+      </div>
+
+      <div class="gloss-entry">
+        <div class="gloss-entry__head"><span class="gloss-entry__term">HTTP / HTTPS</span><span class="gloss-entry__en">HyperText Transfer Protocol (Secure)</span></div>
+        <p class="gloss-entry__def">应用层的请求—响应协议，明文传输；加 TLS 加密层后称为 HTTPS。</p>
+        <p class="gloss-entry__why">它是 Web 的通用语言。理解它的无状态、方法与状态码，等于掌握了排查问题的坐标系。</p>
+      </div>
+
+      <div class="gloss-entry">
+        <div class="gloss-entry__head"><span class="gloss-entry__term">请求头 / 响应头</span><span class="gloss-entry__en">Header</span></div>
+        <p class="gloss-entry__def">报文开头的键值对区域，用来描述元信息（内容类型、缓存策略、凭证、来源等）。</p>
+        <p class="gloss-entry__why">HTTP 的可扩展性几乎全靠头部字段实现。缓存、跨域、鉴权、灰度开关都是"加一个头"。</p>
+      </div>
+
+      <div class="gloss-entry">
+        <div class="gloss-entry__head"><span class="gloss-entry__term">HTTP 方法</span><span class="gloss-entry__en">Method</span></div>
+        <p class="gloss-entry__def">GET 取、POST 建、PUT 整体替换、PATCH 局部改、DELETE 删、HEAD 只取头、OPTIONS 探询。</p>
+        <p class="gloss-entry__why">方法自带语义性质（安全性与幂等性），代理与缓存会据此决策，用错方法会导致重试出错或数据被误改。</p>
+      </div>
+
+      <div class="gloss-entry">
+        <div class="gloss-entry__head"><span class="gloss-entry__term">状态码</span><span class="gloss-entry__en">Status Code</span></div>
+        <p class="gloss-entry__def">三位数字表示结果：2xx 成功、3xx 重定向、4xx 调用方错误、5xx 服务方错误。</p>
+        <p class="gloss-entry__why">它决定了"该谁去修"以及监控系统是否应该报警。全部返回 200 是极坏的习惯。</p>
+      </div>
+
+      <div class="gloss-entry">
+        <div class="gloss-entry__head"><span class="gloss-entry__term">幂等性</span><span class="gloss-entry__en">Idempotence</span></div>
+        <p class="gloss-entry__def">同一请求执行一次与执行多次，对系统状态的影响相同。</p>
+        <p class="gloss-entry__why">网络必然出现"请求发出但响应丢失"，客户端必须能安全重试。支付、下单等接口不幂等就会重复扣款。</p>
+      </div>
+
+      <div class="gloss-entry">
+        <div class="gloss-entry__head"><span class="gloss-entry__term">Cookie</span><span class="gloss-entry__en">Cookie</span></div>
+        <p class="gloss-entry__def">服务器通过 <code>Set-Cookie</code> 写入浏览器的小段数据（约 4KB），之后每次同域请求浏览器都会自动带上。</p>
+        <p class="gloss-entry__why">它是在无状态的 HTTP 之上保存登录状态的基础机制。<code>HttpOnly</code>、<code>Secure</code>、<code>SameSite</code> 三个属性决定它的安全边界。</p>
+      </div>
+
+      <div class="gloss-entry">
+        <div class="gloss-entry__head"><span class="gloss-entry__term">同源策略</span><span class="gloss-entry__en">Same-Origin Policy</span></div>
+        <p class="gloss-entry__def">浏览器的安全限制：协议、域名、端口三者完全相同才算同源，跨源读取响应默认被禁止。</p>
+        <p class="gloss-entry__why">它是浏览器最重要的安全防线（防止恶意网站读取你在其他网站的登录态），也是"跨域问题"的根源。</p>
+      </div>
+
+      <div class="gloss-entry">
+        <div class="gloss-entry__head"><span class="gloss-entry__term">跨域 / CORS</span><span class="gloss-entry__en">Cross-Origin Resource Sharing</span></div>
+        <p class="gloss-entry__def">跨域是指请求的目标与当前页面不同源；CORS 是一套标准，允许服务端通过响应头明确声明"我允许这些来源访问"。</p>
+        <p class="gloss-entry__why">生产环境更推荐用反向代理把接口变成同源，从根上避免 CORS 的复杂配置与 Cookie 限制。</p>
+      </div>
+
+      <div class="gloss-entry">
+        <div class="gloss-entry__head"><span class="gloss-entry__term">预检请求</span><span class="gloss-entry__en">Preflight Request</span></div>
+        <p class="gloss-entry__def">对非简单跨域请求，浏览器先发一个 <code>OPTIONS</code> 请求询问服务器是否允许，得到许可后才发真实请求。</p>
+        <p class="gloss-entry__why">它解释了"为什么跨域请求会出现两次"以及"为什么需要处理 OPTIONS 路由"。它也会增加一次往返延迟。</p>
+      </div>
+
+      <div class="gloss-entry">
+        <div class="gloss-entry__head"><span class="gloss-entry__term">正向代理与反向代理</span><span class="gloss-entry__en">Forward / Reverse Proxy</span></div>
+        <p class="gloss-entry__def"><b>正向代理</b>代表客户端去访问外网（客户端知道自己用了代理）；<b>反向代理</b>代表服务器接收请求再转发给内部服务（客户端不知道背后有几台机器）。</p>
+        <p class="gloss-entry__why">Nginx 是反向代理，它承担 HTTPS 卸载、静态资源、限流、负载均衡；VPN 是正向代理。方向搞反是最常见的表述错误。</p>
+      </div>
+
+      <div class="gloss-entry">
+        <div class="gloss-entry__head"><span class="gloss-entry__term">负载均衡</span><span class="gloss-entry__en">Load Balancing</span></div>
+        <p class="gloss-entry__def">把请求按策略（轮询、最少连接、加权、一致性哈希）分发到多个后端实例。</p>
+        <p class="gloss-entry__why">它是水平扩展的前提，也是高可用的基础（某台挂了自动摘除）。前提是后端服务无状态。</p>
+      </div>
+
+      <div class="gloss-entry">
+        <div class="gloss-entry__head"><span class="gloss-entry__term">CDN</span><span class="gloss-entry__en">Content Delivery Network</span></div>
+        <p class="gloss-entry__def">把静态资源复制到全球各地边缘节点，用户从最近的节点获取，从而降低延迟与源站带宽。</p>
+        <p class="gloss-entry__why">静态资源加速几乎是"零代码改动、收益最大"的优化，同时天然具备一定的抗流量攻击能力。</p>
+      </div>
+
+      <div class="gloss-entry">
+        <div class="gloss-entry__head"><span class="gloss-entry__term">回源</span><span class="gloss-entry__en">Origin Pull</span></div>
+        <p class="gloss-entry__def">CDN 边缘节点缓存未命中或缓存过期时，回到你的源站重新拉取内容。</p>
+        <p class="gloss-entry__why">"源站带宽被打满"通常是缓存命中率太低或缓存策略配错，导致大量请求都在回源。</p>
+      </div>
+
+      <div class="gloss-entry">
+        <div class="gloss-entry__head"><span class="gloss-entry__term">TCP 与 UDP</span><span class="gloss-entry__en">Transmission Control Protocol / User Datagram Protocol</span></div>
+        <p class="gloss-entry__def">TCP 面向连接、保证顺序与可靠；UDP 无连接、不保证送达但延迟低。</p>
+        <p class="gloss-entry__why">"可靠"是用延迟换来的。选哪个取决于业务能否容忍丢数据（网页不能，直播能）。</p>
+      </div>
+
+      <div class="gloss-entry">
+        <div class="gloss-entry__head"><span class="gloss-entry__term">三次握手 / 四次挥手</span><span class="gloss-entry__en">Three-way Handshake / Four-way Termination</span></div>
+        <p class="gloss-entry__def">TCP 建立连接需三次交互确认双方收发能力；关闭连接需四次，因为两个方向要分别关闭。</p>
+        <p class="gloss-entry__why">它解释了连接为什么"贵"（这就是长连接、连接池存在的理由），也解释了大量 <code>TIME_WAIT</code> 的来源。</p>
+      </div>
+
+      <div class="gloss-entry">
+        <div class="gloss-entry__head"><span class="gloss-entry__term">TLS / SSL</span><span class="gloss-entry__en">Transport Layer Security</span></div>
+        <p class="gloss-entry__def">位于传输层与应用层之间的加密层，提供机密性、完整性与身份认证。SSL 是它的旧名。</p>
+        <p class="gloss-entry__why">它是 HTTPS 的全部秘密所在。理解 TLS 的"非对称换密钥 + 对称传数据"结构，就理解了大半网络安全。</p>
+      </div>
+
+      <div class="gloss-entry">
+        <div class="gloss-entry__head"><span class="gloss-entry__term">数字证书与 CA</span><span class="gloss-entry__en">Certificate / Certificate Authority</span></div>
+        <p class="gloss-entry__def">CA 用自己私钥为你的公钥签名，生成证书，证明"这把公钥属于这个域名"。浏览器靠内置的受信任 CA 列表逐级验签。</p>
+        <p class="gloss-entry__why">没有这条信任链，加密就毫无意义——你可以加密，但你不知道对方是谁。证书过期会导致全站无法访问。</p>
+      </div>
+
+      <div class="gloss-entry">
+        <div class="gloss-entry__head"><span class="gloss-entry__term">队头阻塞</span><span class="gloss-entry__en">Head-of-Line Blocking</span></div>
+        <p class="gloss-entry__def">在有序传输中，前一个数据包/请求未完成，后面的必须排队等待。</p>
+        <p class="gloss-entry__why">HTTP/1.1 的应用层队头阻塞催生了域名分片等"歪招"；HTTP/2 解决了它，HTTP/3 进一步解决了 TCP 层的阻塞。</p>
+      </div>
+
+      <div class="gloss-entry">
+        <div class="gloss-entry__head"><span class="gloss-entry__term">WebSocket</span><span class="gloss-entry__en">WebSocket</span></div>
+        <p class="gloss-entry__def">在单个 TCP 连接上实现全双工通信的协议，握手时通过 HTTP 的 <code>Upgrade</code> 头切换协议。</p>
+        <p class="gloss-entry__why">服务端可以主动推送数据，是聊天、协同编辑、实时行情的基础。长连接需要 Nginx 放宽超时并正确转发 Upgrade 头。</p>
+      </div>
+
+      <div class="gloss-entry">
+        <div class="gloss-entry__head"><span class="gloss-entry__term">轮询与 SSE</span><span class="gloss-entry__en">Polling / Server-Sent Events</span></div>
+        <p class="gloss-entry__def">轮询是客户端定时反复请求；长轮询是服务器把请求挂住直到有数据才返回；SSE 是基于 HTTP 的单向持续推送流。</p>
+        <p class="gloss-entry__why">不是所有"实时"都需要 WebSocket。只需要服务端推消息的场景，SSE 实现成本低得多。</p>
+      </div>
+
+      <div class="gloss-entry">
+        <div class="gloss-entry__head"><span class="gloss-entry__term">API / SDK / Endpoint</span><span class="gloss-entry__en">Application Programming Interface</span></div>
+        <p class="gloss-entry__def"><b>API</b> 是程序之间约定的调用接口；<b>Endpoint</b> 是 API 的一个具体访问地址；<b>SDK</b> 是把 API 封装好的开发工具包。</p>
+        <p class="gloss-entry__why">前后端分离之后，"接口"就是团队协作的合同，因此接口规范与文档比代码本身更值得先定下来。</p>
+      </div>
+
+      <div class="gloss-entry">
+        <div class="gloss-entry__head"><span class="gloss-entry__term">REST / GraphQL / RPC</span><span class="gloss-entry__en">Representational State Transfer</span></div>
+        <p class="gloss-entry__def"><b>REST</b>：用 HTTP 方法与名词化 URL 操作资源，无状态、可缓存；<b>GraphQL</b>：客户端自定义要哪些字段，一次请求取回多项数据；<b>RPC / gRPC</b>：像调用本地函数一样调用远端方法，偏服务间通信。</p>
+        <p class="gloss-entry__why">REST 是 Web 接口的主流；GraphQL 适合前端需求多变、接口聚合多的场景；gRPC 适合内部服务间高性能通信。</p>
+      </div>
+
+      <div class="gloss-entry">
+        <div class="gloss-entry__head"><span class="gloss-entry__term">Webhook</span><span class="gloss-entry__en">Webhook</span></div>
+        <p class="gloss-entry__def">由事件触发的反向调用：你提供一个 URL，对方在事件发生时主动来请求你（如支付成功通知）。</p>
+        <p class="gloss-entry__why">它是异步系统之间最常见的信息通道。必须做签名校验、幂等处理与失败重试，否则会重复入账。</p>
+      </div>
+
+      <div class="gloss-entry">
+        <div class="gloss-entry__head"><span class="gloss-entry__term">内容压缩</span><span class="gloss-entry__en">gzip / Brotli</span></div>
+        <p class="gloss-entry__def">服务器在传输前压缩文本类资源（HTML/CSS/JS/JSON），浏览器自动解压。</p>
+        <p class="gloss-entry__why">一行配置就能减少 60%～80% 的传输体积，是性价比极高的优化。注意不要压缩图片和视频——它们本身已是压缩格式。</p>
+      </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <h2 id="g-frontend">二、前端与浏览器</h2>
+    <div class="gloss-list">
+
+      <div class="gloss-entry">
+        <div class="gloss-entry__head"><span class="gloss-entry__term">前端</span><span class="gloss-entry__en">Front-end</span></div>
+        <p class="gloss-entry__def">运行在用户设备（浏览器）上的那一部分程序，负责界面呈现与交互。</p>
+        <p class="gloss-entry__why">它与后端的根本区别是<b>运行环境不可控</b>：代码对用户完全可见、可被修改、可被复制。所以前端不能承担安全职责。</p>
+      </div>
+
+      <div class="gloss-entry">
+        <div class="gloss-entry__head"><span class="gloss-entry__term">DOM</span><span class="gloss-entry__en">Document Object Model</span></div>
+        <p class="gloss-entry__def">浏览器把 HTML 解析成的一棵对象树，JS 通过它读取和修改页面内容与结构。</p>
+        <p class="gloss-entry__why">所有前端框架最终都只是在"更高效地更新 DOM"。理解 DOM 是理解虚拟 DOM、重排重绘的前提。</p>
+      </div>
+
+      <div class="gloss-entry">
+        <div class="gloss-entry__head"><span class="gloss-entry__term">关键渲染路径</span><span class="gloss-entry__en">Critical Rendering Path</span></div>
+        <p class="gloss-entry__def">浏览器把 HTML/CSS 变成屏幕像素的流程：HTML → DOM，CSS → CSSOM，合成渲染树 → 布局 → 绘制 → 合成。</p>
+        <p class="gloss-entry__why">它解释了为什么 CSS 会阻塞渲染、脚本要放末尾或加 defer，以及为什么首屏会出现白屏。</p>
+      </div>
+
+      <div class="gloss-entry">
+        <div class="gloss-entry__head"><span class="gloss-entry__term">重排与重绘</span><span class="gloss-entry__en">Reflow / Repaint</span></div>
+        <p class="gloss-entry__def"><b>重排</b>是几何属性变化导致重新计算布局（贵）；<b>重绘</b>只是颜色等视觉属性变化（较便宜）；<code>transform</code> 与 <code>opacity</code> 可只走合成，几乎零成本。</p>
+        <p class="gloss-entry__why">动画卡顿通常是因为在改 <code>width</code>/<code>top</code> 触发了重排。改用 transform 是最高效的性能优化之一。</p>
+      </div>
+
+      <div class="gloss-entry">
+        <div class="gloss-entry__head"><span class="gloss-entry__term">事件冒泡与捕获</span><span class="gloss-entry__en">Bubbling / Capturing</span></div>
+        <p class="gloss-entry__def">事件在 DOM 树上传播的两个阶段：从外到内是捕获，从内到外是冒泡（默认监听器工作在冒泡阶段）。</p>
+        <p class="gloss-entry__why">不理解传播机制就无法解释"点了一个按钮却触发了父容器的点击"（由此引出 <code>stopPropagation</code>）。</p>
+      </div>
+
+      <div class="gloss-entry">
+        <div class="gloss-entry__head"><span class="gloss-entry__term">事件委托</span><span class="gloss-entry__en">Event Delegation</span></div>
+        <p class="gloss-entry__def">利用冒泡，把监听器挂在父元素上，通过 <code>event.target</code> 判断是哪个子元素被点击。</p>
+        <p class="gloss-entry__why">动态新增的子元素自动拥有事件，且只需一个监听器，内存占用更低。是列表类界面的标准做法。</p>
+      </div>
+
+      <div class="gloss-entry">
+        <div class="gloss-entry__head"><span class="gloss-entry__term">宏任务与微任务</span><span class="gloss-entry__en">Macrotask / Microtask</span></div>
+        <p class="gloss-entry__def">事件循环中的两类任务队列：宏任务（setTimeout、IO 回调）每轮取一个；微任务（Promise.then）在当前任务结束后<b>全部清空</b>。</p>
+        <p class="gloss-entry__why">它解释了"为什么 Promise 比 setTimeout 先执行"这类高频问题，也解释了异步代码的执行顺序。</p>
+      </div>
+
+      <div class="gloss-entry">
+        <div class="gloss-entry__head"><span class="gloss-entry__term">闭包</span><span class="gloss-entry__en">Closure</span></div>
+        <p class="gloss-entry__def">函数与其定义时所在作用域的组合，使函数可以在外部作用域结束后仍访问其中的变量。</p>
+        <p class="gloss-entry__why">它实现了私有变量、函数工厂、防抖节流。代价是变量无法被回收，滥用会导致内存占用升高。</p>
+      </div>
+
+      <div class="gloss-entry">
+        <div class="gloss-entry__head"><span class="gloss-entry__term">声明式与命令式</span><span class="gloss-entry__en">Declarative / Imperative</span></div>
+        <p class="gloss-entry__def">命令式是"一步一步告诉程序怎么做"（手动找元素再改它）；声明式是"描述结果应该是什么样"（状态变了框架负责更新界面）。</p>
+        <p class="gloss-entry__why">这是现代前端框架的共同思想，也是它比原生 DOM 操作更好维护的根本原因。</p>
+      </div>
+
+      <div class="gloss-entry">
+        <div class="gloss-entry__head"><span class="gloss-entry__term">虚拟 DOM</span><span class="gloss-entry__en">Virtual DOM</span></div>
+        <p class="gloss-entry__def">用普通 JS 对象描述界面的结构，状态变化时先生成新的虚拟树，与旧树对比（diff）后只把差异部分同步到真实 DOM。</p>
+        <p class="gloss-entry__why">它的价值不是"比手写 DOM 快"，而是让开发者不必关心性能细节，同时提供了跨平台渲染的能力。</p>
+      </div>
+
+      <div class="gloss-entry">
+        <div class="gloss-entry__head"><span class="gloss-entry__term">组件化</span><span class="gloss-entry__en">Component</span></div>
+        <p class="gloss-entry__def">把界面拆成独立、可复用、可组合的单元，每个单元自带结构、样式与逻辑。</p>
+        <p class="gloss-entry__why">它是前端领域的"高内聚低耦合"落地方式。组件边界划分得好，项目就能长期维护。</p>
+      </div>
+
+      <div class="gloss-entry">
+        <div class="gloss-entry__head"><span class="gloss-entry__term">SPA 与 MPA</span><span class="gloss-entry__en">Single / Multi Page Application</span></div>
+        <p class="gloss-entry__def"><b>SPA</b> 只加载一次 HTML，之后的页面切换由前端路由完成；<b>MPA</b> 每次跳转都由服务器返回新的 HTML。</p>
+        <p class="gloss-entry__why">SPA 交互顺滑但首屏慢、SEO 弱；MPA 首屏快但每次跳转有整页刷新。混合渲染就是为了兼得两者。</p>
+      </div>
+
+      <div class="gloss-entry">
+        <div class="gloss-entry__head"><span class="gloss-entry__term">SSR / SSG / ISR / CSR</span><span class="gloss-entry__en">Rendering Modes</span></div>
+        <p class="gloss-entry__def">服务端每次请求渲染 / 构建时生成静态页 / 静态页按需再生 / 浏览器端渲染。</p>
+        <p class="gloss-entry__why">它决定了首屏速度、SEO 与服务器成本。选错会导致"页面要 5 秒才出来"这类难以后期补救的问题。</p>
+      </div>
+
+      <div class="gloss-entry">
+        <div class="gloss-entry__head"><span class="gloss-entry__term">水合</span><span class="gloss-entry__en">Hydration</span></div>
+        <p class="gloss-entry__def">为服务端渲染出的静态 DOM 附加事件监听与状态，使页面从"能看"变成"能点"。</p>
+        <p class="gloss-entry__why">它解释了"页面已经显示但按钮点不动"的现象，也是 SSR 性能优化的核心难点。</p>
+      </div>
+
+      <div class="gloss-entry">
+        <div class="gloss-entry__head"><span class="gloss-entry__term">前端路由</span><span class="gloss-entry__en">Client-side Routing</span></div>
+        <p class="gloss-entry__def">由 JS 拦截地址变化并渲染对应组件。分 Hash 路由（<code>#/path</code>，不发请求）与 History 路由（真实路径，需要服务器配置回退到 index.html）。</p>
+        <p class="gloss-entry__why">用 History 路由但没配 <code>try_files</code> 回退，刷新二级页面就会 404 —— 这是上线后最常见的低级故障。</p>
+      </div>
+
+      <div class="gloss-entry">
+        <div class="gloss-entry__head"><span class="gloss-entry__term">状态管理</span><span class="gloss-entry__en">State Management</span></div>
+        <p class="gloss-entry__def">集中存放多个组件共享的数据（用户信息、购物车），并提供统一的读写规则。</p>
+        <p class="gloss-entry__why">组件间传参超过两层就该考虑状态管理。但小项目引入重型方案会带来不必要的复杂度。</p>
+      </div>
+
+      <div class="gloss-entry">
+        <div class="gloss-entry__head"><span class="gloss-entry__term">构建与打包</span><span class="gloss-entry__en">Build / Bundle</span></div>
+        <p class="gloss-entry__def">把源码（模块化、含新语法、含各类资源）转换成浏览器可高效运行的产物：合并、压缩、转译、加哈希。</p>
+        <p class="gloss-entry__why">"本地能跑、线上白屏"多数是构建产物路径或环境变量问题。要理解 <code>dev</code> 与 <code>build</code> 是两套不同的产物。</p>
+      </div>
+
+      <div class="gloss-entry">
+        <div class="gloss-entry__head"><span class="gloss-entry__term">Tree Shaking / 代码分割</span><span class="gloss-entry__en">Dead Code Elimination / Code Splitting</span></div>
+        <p class="gloss-entry__def">前者在构建时删除未被引用的代码；后者把产物拆成多个小块，按需加载。</p>
+        <p class="gloss-entry__why">首屏 JS 体积是移动端体验的决定因素。这两项能让首屏体积从几 MB 降到几百 KB。</p>
+      </div>
+
+      <div class="gloss-entry">
+        <div class="gloss-entry__head"><span class="gloss-entry__term">转译与 Polyfill</span><span class="gloss-entry__en">Transpile / Polyfill</span></div>
+        <p class="gloss-entry__def">转译是把新语法（ES2023）改写成旧环境能识别的语法；Polyfill 是为旧浏览器补上缺失的内置 API。</p>
+        <p class="gloss-entry__why">两者解决不同问题：语法兼容用转译，能力缺失用 Polyfill。配错会导致"语法没错但运行时报 is not a function"。</p>
+      </div>
+
+      <div class="gloss-entry">
+        <div class="gloss-entry__head"><span class="gloss-entry__term">Source Map</span><span class="gloss-entry__en">Source Map</span></div>
+        <p class="gloss-entry__def">一份映射表，把压缩混淆后的代码行号还原回源码位置，供调试使用。</p>
+        <p class="gloss-entry__why">线上报错排查的关键。但生产环境的 sourcemap 不应公开可访问，否则源码会被完整还原。</p>
+      </div>
+
+      <div class="gloss-entry">
+        <div class="gloss-entry__head"><span class="gloss-entry__term">可访问性</span><span class="gloss-entry__en">Accessibility, a11y</span></div>
+        <p class="gloss-entry__def">让残障用户（视障、色盲、行动不便）也能使用你的网站，涉及语义标签、键盘可操作、对比度、屏幕阅读器支持。</p>
+        <p class="gloss-entry__why">它同时改善 SEO、移动端体验与全部用户的可用性，而且很多地区是法律要求。</p>
+      </div>
+
+      <div class="gloss-entry">
+        <div class="gloss-entry__head"><span class="gloss-entry__term">SEO</span><span class="gloss-entry__en">Search Engine Optimization</span></div>
+        <p class="gloss-entry__def">让搜索引擎能抓取、理解并优先展示你的页面。技术侧要点：语义化标签、可爬取的 HTML、meta 信息、站点地图、结构化数据。</p>
+        <p class="gloss-entry__why">纯 CSR 的页面搜索引擎抓不到内容，这是"要不要做 SSR"最现实的判断依据。</p>
+      </div>
+
+      <div class="gloss-entry">
+        <div class="gloss-entry__head"><span class="gloss-entry__term">Core Web Vitals</span><span class="gloss-entry__en">LCP / INP / CLS</span></div>
+        <p class="gloss-entry__def">三个官方用户体验指标：<b>LCP</b> 首屏主内容出现时间（＜2.5s）、<b>INP</b> 交互响应延迟（＜200ms）、<b>CLS</b> 布局偏移（＜0.1）。</p>
+        <p class="gloss-entry__why">它们既是性能度量，也直接影响搜索排名，是"性能优化做到什么程度算够"的客观标尺。</p>
+      </div>
+
+      <div class="gloss-entry">
+        <div class="gloss-entry__head"><span class="gloss-entry__term">PWA / WebAssembly</span><span class="gloss-entry__en">Progressive Web App / WASM</span></div>
+        <p class="gloss-entry__def">PWA 用 Service Worker 与清单文件让网页可离线、可安装；WebAssembly 让 C/C++/Rust 编译的代码在浏览器里接近原生速度运行。</p>
+        <p class="gloss-entry__why">前者让 Web 追上原生应用的体验，后者让 Web 能胜任视频编辑、3D、图像处理等重计算场景。</p>
+      </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <h2 id="g-lang">三、语言与运行时</h2>
+    <div class="gloss-list">
+
+      <div class="gloss-entry">
+        <div class="gloss-entry__head"><span class="gloss-entry__term">编译型与解释型</span><span class="gloss-entry__en">Compiled / Interpreted</span></div>
+        <p class="gloss-entry__def">编译型语言在执行前整体翻译成机器码（Go、Rust、C）；解释型语言运行时逐行由解释器执行（Python、PHP、JS）。</p>
+        <p class="gloss-entry__why">它不是优劣之分而是权衡：编译型启动快、性能可预测但改一行要重新构建；解释型开发灵活但启动慢、性能有上限。</p>
+      </div>
+
+      <div class="gloss-entry">
+        <div class="gloss-entry__head"><span class="gloss-entry__term">字节码与虚拟机</span><span class="gloss-entry__en">Bytecode / VM</span></div>
+        <p class="gloss-entry__def">源码先编译成中间指令（字节码），再由虚拟机执行。Java 的 JVM、Python 的 CPython、JS 的 V8 都是这个模式。</p>
+        <p class="gloss-entry__why">中间层带来了跨平台能力（"一次编译，到处运行"）和运行时优化空间（JIT），代价是多了一层开销与更高的内存占用。</p>
+      </div>
+
+      <div class="gloss-entry">
+        <div class="gloss-entry__head"><span class="gloss-entry__term">JIT 与 AOT</span><span class="gloss-entry__en">Just-In-Time / Ahead-Of-Time</span></div>
+        <p class="gloss-entry__def">JIT 在运行时把热点代码编译成机器码（越跑越快）；AOT 在构建时提前编译成原生程序（启动即快）。</p>
+        <p class="gloss-entry__why">它解释了 Java/.NET 服务"启动慢、跑热了很快"的现象，也解释了 GraalVM、.NET AOT 为何能把启动时间从秒级降到毫秒级。</p>
+      </div>
+
+      <div class="gloss-entry">
+        <div class="gloss-entry__head"><span class="gloss-entry__term">运行时</span><span class="gloss-entry__en">Runtime</span></div>
+        <p class="gloss-entry__def">程序执行时所需的环境支持：解释器/虚拟机、标准库、内存管理、IO 接口。</p>
+        <p class="gloss-entry__why">部署的本质就是"在服务器上准备好正确的运行时"。Docker 镜像真正固定的就是这一层。</p>
+      </div>
+
+      <div class="gloss-entry">
+        <div class="gloss-entry__head"><span class="gloss-entry__term">静态类型与动态类型</span><span class="gloss-entry__en">Static / Dynamic Typing</span></div>
+        <p class="gloss-entry__def">静态类型在编译期检查类型错误（Java、Go、TS）；动态类型在运行时才确定（Python、JS、PHP）。</p>
+        <p class="gloss-entry__why">静态类型把大量低级错误挡在发布之前，项目越大收益越明显。这也是 TypeScript 流行的根本原因。</p>
+      </div>
+
+      <div class="gloss-entry">
+        <div class="gloss-entry__head"><span class="gloss-entry__term">强类型与弱类型</span><span class="gloss-entry__en">Strong / Weak Typing</span></div>
+        <p class="gloss-entry__def">强类型不允许隐式跨类型转换（<code>"1" + 1</code> 会报错）；弱类型会自动转换（JS 里会得到 <code>"11"</code>）。</p>
+        <p class="gloss-entry__why">弱类型的隐式转换是大量诡异 bug 的来源，所以现代 JS 实践建议一律用 <code>===</code> 并统一引入类型系统。</p>
+      </div>
+
+      <div class="gloss-entry">
+        <div class="gloss-entry__head"><span class="gloss-entry__term">垃圾回收</span><span class="gloss-entry__en">Garbage Collection, GC</span></div>
+        <p class="gloss-entry__def">运行时自动回收不再被引用的内存，开发者不必手动 free。</p>
+        <p class="gloss-entry__why">它消除了大部分内存安全问题，但会带来"Stop The World"式的暂停（影响延迟）和更高的内存占用，这正是 Go/Rust 强调低延迟 GC 与无 GC 的战场。</p>
+      </div>
+
+      <div class="gloss-entry">
+        <div class="gloss-entry__head"><span class="gloss-entry__term">内存泄漏</span><span class="gloss-entry__en">Memory Leak</span></div>
+        <p class="gloss-entry__def">不再需要的对象仍然被引用，导致 GC 无法回收，内存持续增长直到进程被系统杀死。</p>
+        <p class="gloss-entry__why">典型症状是"重启就好，跑几天就崩"。在容器里表现为被 OOM Killer 杀掉、服务神秘消失。</p>
+      </div>
+
+      <div class="gloss-entry">
+        <div class="gloss-entry__head"><span class="gloss-entry__term">栈与堆</span><span class="gloss-entry__en">Stack / Heap</span></div>
+        <p class="gloss-entry__def">栈存放函数调用与局部变量，分配快、自动释放、容量小；堆存放动态对象，容量大但分配回收成本高。</p>
+        <p class="gloss-entry__why">"栈溢出"与"堆内存不足"是两类完全不同的故障，排查方向也不同。</p>
+      </div>
+
+      <div class="gloss-entry">
+        <div class="gloss-entry__head"><span class="gloss-entry__term">进程 / 线程 / 协程</span><span class="gloss-entry__en">Process / Thread / Coroutine</span></div>
+        <p class="gloss-entry__def">进程有独立内存空间；线程共享进程内存；协程是用户态调度的超轻量执行单元。</p>
+        <p class="gloss-entry__why">三者的隔离性、开销、并发能力不同，直接决定了语言与框架的并发模型（goroutine、async/await、线程池）。</p>
+      </div>
+
+      <div class="gloss-entry">
+        <div class="gloss-entry__head"><span class="gloss-entry__term">并发与并行</span><span class="gloss-entry__en">Concurrency / Parallelism</span></div>
+        <p class="gloss-entry__def">并发是"同时处理多个任务的结构"（单核也能做）；并行是"同一时刻真正同时执行"（需要多核）。</p>
+        <p class="gloss-entry__why">Web 服务是 IO 密集，需要的是并发而非并行。这是"单线程的 Node.js 也能扛高并发"的原因。</p>
+      </div>
+
+      <div class="gloss-entry">
+        <div class="gloss-entry__head"><span class="gloss-entry__term">同步 / 异步 / 阻塞 / 非阻塞</span><span class="gloss-entry__en">Sync / Async / Blocking / Non-blocking</span></div>
+        <p class="gloss-entry__def">同步异步描述"调用方要不要等结果"；阻塞非阻塞描述"等待期间线程能不能干别的"。</p>
+        <p class="gloss-entry__why">这四个词常被混为一谈。分清它们才能理解为什么异步非阻塞能用少量线程支撑海量连接。</p>
+      </div>
+
+      <div class="gloss-entry">
+        <div class="gloss-entry__head"><span class="gloss-entry__term">GIL</span><span class="gloss-entry__en">Global Interpreter Lock</span></div>
+        <p class="gloss-entry__def">CPython 的全局解释器锁，保证同一进程内同一时刻只有一个线程执行 Python 字节码。</p>
+        <p class="gloss-entry__why">它让 Python 多线程无法并行做 CPU 密集任务（IO 密集不受影响），因此需要用多进程或原生扩展来利用多核。</p>
+      </div>
+
+      <div class="gloss-entry">
+        <div class="gloss-entry__head"><span class="gloss-entry__term">竞态条件</span><span class="gloss-entry__en">Race Condition</span></div>
+        <p class="gloss-entry__def">多个执行单元以不可预期的顺序访问共享数据，导致结果取决于"谁先谁后"。</p>
+        <p class="gloss-entry__why">它几乎无法在测试环境复现，只能在压力下偶发。必须靠原子操作、锁、队列从机制上消除。</p>
+      </div>
+
+      <div class="gloss-entry">
+        <div class="gloss-entry__head"><span class="gloss-entry__term">死锁</span><span class="gloss-entry__en">Deadlock</span></div>
+        <p class="gloss-entry__def">多个执行单元互相持有对方需要的资源且都不释放，形成永久等待。</p>
+        <p class="gloss-entry__why">表现为"接口全部卡死不返回"。预防手段是统一加锁顺序、设置锁超时、缩小事务范围。</p>
+      </div>
+
+      <div class="gloss-entry">
+        <div class="gloss-entry__head"><span class="gloss-entry__term">中间件</span><span class="gloss-entry__en">Middleware</span></div>
+        <p class="gloss-entry__def">在请求到达业务代码之前（或之后）依次执行的一串处理单元，如日志、鉴权、限流、CORS、错误处理。</p>
+        <p class="gloss-entry__why">它把横切关注点从业务代码里抽出来，是"关注点分离"最直观的实现。</p>
+      </div>
+
+      <div class="gloss-entry">
+        <div class="gloss-entry__head"><span class="gloss-entry__term">依赖注入</span><span class="gloss-entry__en">Dependency Injection, DI</span></div>
+        <p class="gloss-entry__def">对象不自己创建依赖，而是由外部传入。这样依赖可以被替换成测试替身。</p>
+        <p class="gloss-entry__why">它是让业务逻辑可单元测试的关键手段，也是 Spring、NestJS 等框架的核心能力。</p>
+      </div>
+
+      <div class="gloss-entry">
+        <div class="gloss-entry__head"><span class="gloss-entry__term">包管理与锁文件</span><span class="gloss-entry__en">Package Manager / Lock File</span></div>
+        <p class="gloss-entry__def">包管理器负责下载依赖；锁文件记录每个依赖的确切版本与来源哈希。</p>
+        <p class="gloss-entry__why">锁文件<b>必须提交到版本控制</b>，否则某天某个间接依赖发布新版本就会导致构建失败或线上行为变化。</p>
+      </div>
+
+      <div class="gloss-entry">
+        <div class="gloss-entry__head"><span class="gloss-entry__term">语义化版本</span><span class="gloss-entry__en">Semantic Versioning</span></div>
+        <p class="gloss-entry__def"><code>主版本.次版本.修订号</code>：修修订号是修 bug 且兼容，次版本是加功能且兼容，主版本是破坏性变更。</p>
+        <p class="gloss-entry__why">它让 <code>^</code>、<code>~</code> 这类版本范围有了明确含义，也让你能判断"升级会不会炸"。</p>
+      </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <h2 id="g-db">四、数据库</h2>
+    <div class="gloss-list">
+
+      <div class="gloss-entry">
+        <div class="gloss-entry__head"><span class="gloss-entry__term">关系型数据库</span><span class="gloss-entry__en">RDBMS</span></div>
+        <p class="gloss-entry__def">以二维表存储数据、用 SQL 查询、支持强事务的数据库（MySQL、PostgreSQL、Oracle、SQL Server）。</p>
+        <p class="gloss-entry__why">绝大多数业务系统的主力存储，因为它提供了事务与约束这两样保证数据正确性的基础能力。</p>
+      </div>
+
+      <div class="gloss-entry">
+        <div class="gloss-entry__head"><span class="gloss-entry__term">主键 / 外键 / 唯一约束</span><span class="gloss-entry__en">Primary / Foreign / Unique Key</span></div>
+        <p class="gloss-entry__def">主键唯一标识一行；外键建立表之间引用并保证其有效性；唯一约束保证某列不重复。</p>
+        <p class="gloss-entry__why">它们是"数据正确性交给数据库保证"的手段，比只在应用层校验可靠得多——应用可能被绕过，约束不会。</p>
+      </div>
+
+      <div class="gloss-entry">
+        <div class="gloss-entry__head"><span class="gloss-entry__term">索引</span><span class="gloss-entry__en">Index</span></div>
+        <p class="gloss-entry__def">为加速查询而额外维护的排序数据结构，本质是"用空间与写入速度换查询速度"。</p>
+        <p class="gloss-entry__why">加索引通常是性价比最高的性能优化，但索引过多会拖慢写入并占用磁盘，所以不能见字段就加。</p>
+      </div>
+
+      <div class="gloss-entry">
+        <div class="gloss-entry__head"><span class="gloss-entry__term">B+ 树</span><span class="gloss-entry__en">B+ Tree</span></div>
+        <p class="gloss-entry__def">数据库索引最常用的数据结构：多叉平衡树，数据只存在叶子节点且叶子之间用链表相连。</p>
+        <p class="gloss-entry__why">它让范围查询（<code>BETWEEN</code>、<code>ORDER BY</code>）也高效，并用很少的层数（通常 3～4 层）索引千万级数据。</p>
+      </div>
+
+      <div class="gloss-entry">
+        <div class="gloss-entry__head"><span class="gloss-entry__term">联合索引与最左前缀</span><span class="gloss-entry__en">Composite Index / Leftmost Prefix</span></div>
+        <p class="gloss-entry__def">在多个列上建一个索引 <code>(a, b, c)</code>；查询条件必须从最左列开始连续匹配才能用上它。</p>
+        <p class="gloss-entry__why">"索引建了却没生效"最常见的原因就是违反了最左前缀（比如只查 b 而没查 a）。</p>
+      </div>
+
+      <div class="gloss-entry">
+        <div class="gloss-entry__head"><span class="gloss-entry__term">回表与覆盖索引</span><span class="gloss-entry__en">Back to Table / Covering Index</span></div>
+        <p class="gloss-entry__def">索引里只有索引列的值，若还需要其他列，就得按主键再查一次数据行（回表）；若查询所需列都在索引里，则无需回表（覆盖索引）。</p>
+        <p class="gloss-entry__why">"一页要看 20 条订单，却触发了 21 次查询"就是回表的典型代价，覆盖索引可以彻底避免。</p>
+      </div>
+
+      <div class="gloss-entry">
+        <div class="gloss-entry__head"><span class="gloss-entry__term">执行计划</span><span class="gloss-entry__en">EXPLAIN / Query Plan</span></div>
+        <p class="gloss-entry__def">数据库对一条 SQL 的执行方案：用哪个索引、扫描多少行、是否排序、是否临时表。</p>
+        <p class="gloss-entry__why">不看执行计划就谈 SQL 优化都是猜测。上线前对新增的复杂查询跑一次 <code>EXPLAIN</code> 是极低成本的保险。</p>
+      </div>
+
+      <div class="gloss-entry">
+        <div class="gloss-entry__head"><span class="gloss-entry__term">慢查询</span><span class="gloss-entry__en">Slow Query</span></div>
+        <p class="gloss-entry__def">执行时间超过阈值的 SQL，被数据库记录到慢查询日志中。</p>
+        <p class="gloss-entry__why">它是定位性能瓶颈的第一手材料。绝大多数"接口慢"最终都能追到某几条慢查询上。</p>
+      </div>
+
+      <div class="gloss-entry">
+        <div class="gloss-entry__head"><span class="gloss-entry__term">事务与 ACID</span><span class="gloss-entry__en">Transaction / Atomicity, Consistency, Isolation, Durability</span></div>
+        <p class="gloss-entry__def"><b>原子性</b>要么全成功要么全回滚；<b>一致性</b>约束不被破坏；<b>隔离性</b>并发事务互不干扰；<b>持久性</b>提交后不丢。</p>
+        <p class="gloss-entry__why">转账、下单、扣库存必须放在事务里。事务范围过大会造成锁等待甚至雪崩，因此"事务里不要调外部接口"是硬规则。</p>
+      </div>
+
+      <div class="gloss-entry">
+        <div class="gloss-entry__head"><span class="gloss-entry__term">隔离级别与并发问题</span><span class="gloss-entry__en">Isolation Level</span></div>
+        <p class="gloss-entry__def">读未提交 → 读已提交 → 可重复读 → 串行化。级别越高越安全但并发性能越差。对应问题：脏读、不可重复读、幻读。</p>
+        <p class="gloss-entry__why">"同样的查询两次结果不同"往往就是隔离级别所致，而不是代码 bug。MySQL 默认可重复读，PostgreSQL 默认读已提交。</p>
+      </div>
+
+      <div class="gloss-entry">
+        <div class="gloss-entry__head"><span class="gloss-entry__term">MVCC</span><span class="gloss-entry__en">Multi-Version Concurrency Control</span></div>
+        <p class="gloss-entry__def">通过保存数据的多个版本，让读操作不加锁也能读到一致快照，实现"读写不互斥"。</p>
+        <p class="gloss-entry__why">它大幅提升了并发读性能，也意味着旧版本数据会占用空间（由此引出数据库膨胀与清理机制）。</p>
+      </div>
+
+      <div class="gloss-entry">
+        <div class="gloss-entry__head"><span class="gloss-entry__term">锁</span><span class="gloss-entry__en">Lock</span></div>
+        <p class="gloss-entry__def">共享锁（读锁，可共存）与排他锁（写锁，互斥）；粒度上有行锁、页锁、表锁。</p>
+        <p class="gloss-entry__why">"接口突然全部变慢"经常是有人在跑长事务持有行锁。看 <code>processlist</code> 找长时间运行的语句是关键排查动作。</p>
+      </div>
+
+      <div class="gloss-entry">
+        <div class="gloss-entry__head"><span class="gloss-entry__term">范式与反范式</span><span class="gloss-entry__en">Normalization / Denormalization</span></div>
+        <p class="gloss-entry__def">范式通过拆表消除冗余，保证一致性；反范式故意冗余字段以减少连表、提升读取性能。</p>
+        <p class="gloss-entry__why">订单明细里冗余"商品名称与成交价"是必须的反范式——它是历史快照，不是冗余数据。判断关键是"这份数据会不会变"。</p>
+      </div>
+
+      <div class="gloss-entry">
+        <div class="gloss-entry__head"><span class="gloss-entry__term">迁移</span><span class="gloss-entry__en">Migration</span></div>
+        <p class="gloss-entry__def">把数据库结构变更写成可版本化、可回滚的脚本，随代码一起提交与执行。</p>
+        <p class="gloss-entry__why">手工在客户端改表迟早漏掉某个环境。破坏性变更还必须分多次发布，保证新旧代码都能运行。</p>
+      </div>
+
+      <div class="gloss-entry">
+        <div class="gloss-entry__head"><span class="gloss-entry__term">连接池</span><span class="gloss-entry__en">Connection Pool</span></div>
+        <p class="gloss-entry__def">预先建立并复用一组数据库连接，避免每次请求都重新握手。</p>
+        <p class="gloss-entry__why">池太小会导致请求排队，池太大会把数据库连接数打满。所以要关注"等待可用连接的时长"这个隐藏指标。</p>
+      </div>
+
+      <div class="gloss-entry">
+        <div class="gloss-entry__head"><span class="gloss-entry__term">N+1 查询问题</span><span class="gloss-entry__en">N+1 Query Problem</span></div>
+        <p class="gloss-entry__def">先查一批（1 次），再为每条记录单独查关联数据（N 次），总共 N+1 次查询。</p>
+        <p class="gloss-entry__why">ORM 使用不当的典型后果。改成批量 <code>IN</code> 查询后，接口耗时常常能降低一个数量级。</p>
+      </div>
+
+      <div class="gloss-entry">
+        <div class="gloss-entry__head"><span class="gloss-entry__term">主从复制与读写分离</span><span class="gloss-entry__en">Replication / Read-Write Splitting</span></div>
+        <p class="gloss-entry__def">主库负责写、从库同步数据负责读。同步有延迟，因此从库可能读到稍旧的数据。</p>
+        <p class="gloss-entry__why">"刚保存就查不到"就是因为走了从库。"主从延迟"是分布式系统中最终一致性最贴近生活的例子。</p>
+      </div>
+
+      <div class="gloss-entry">
+        <div class="gloss-entry__head"><span class="gloss-entry__term">分库分表</span><span class="gloss-entry__en">Sharding</span></div>
+        <p class="gloss-entry__def">把一张大表按范围或哈希拆到多个库/表中，以突破单库容量与性能上限。</p>
+        <p class="gloss-entry__why">它是最后的扩容手段，会引入跨分片查询、分布式事务、运维复杂度等大量成本。单表千万级以前不需要考虑。</p>
+      </div>
+
+      <div class="gloss-entry">
+        <div class="gloss-entry__head"><span class="gloss-entry__term">NoSQL</span><span class="gloss-entry__en">Not Only SQL</span></div>
+        <p class="gloss-entry__def">非关系型数据库的统称：文档型（MongoDB）、键值型（Redis）、宽列型（Cassandra）、图型（Neo4j）、搜索引擎（Elasticsearch）、时序型（InfluxDB）。</p>
+        <p class="gloss-entry__why">它们放弃了强事务或固定结构，换取极致的扩展性、灵活结构或特定查询能力。选型看数据结构与访问模式，而不是流行度。</p>
+      </div>
+
+      <div class="gloss-entry">
+        <div class="gloss-entry__head"><span class="gloss-entry__term">缓存</span><span class="gloss-entry__en">Cache</span></div>
+        <p class="gloss-entry__def">把昂贵计算或查询的结果暂存到更快的介质中（内存、Redis、浏览器、CDN）。</p>
+        <p class="gloss-entry__why">它是性能优化的核武器，但引入了一致性问题：数据改了缓存什么时候失效，是必须提前设计的问题。</p>
+      </div>
+
+      <div class="gloss-entry">
+        <div class="gloss-entry__head"><span class="gloss-entry__term">缓存穿透 / 击穿 / 雪崩</span><span class="gloss-entry__en">Penetration / Breakdown / Avalanche</span></div>
+        <p class="gloss-entry__def"><b>穿透</b>：查不存在的数据，缓存永远不命中；<b>击穿</b>：热点 key 过期瞬间大量请求打到数据库；<b>雪崩</b>：大批 key 同时失效。</p>
+        <p class="gloss-entry__why">三者后果相同（数据库被打垮）但解法不同：缓存空值 / 互斥重建 / 随机化过期时间。</p>
+      </div>
+
+      <div class="gloss-entry">
+        <div class="gloss-entry__head"><span class="gloss-entry__term">冷热数据与归档</span><span class="gloss-entry__en">Hot / Cold Data, Archiving</span></div>
+        <p class="gloss-entry__def">频繁访问的是热数据（留在主库），极少访问的是冷数据（迁到历史表或对象存储）。</p>
+        <p class="gloss-entry__why">这是解决"表越来越大越来越慢"最经济的手段，同时要注意业务上是否还需要查询历史数据。</p>
+      </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <h2 id="g-arch">五、架构</h2>
+    <div class="gloss-list">
+
+      <div class="gloss-entry">
+        <div class="gloss-entry__head"><span class="gloss-entry__term">架构</span><span class="gloss-entry__en">Architecture</span></div>
+        <p class="gloss-entry__def">系统由哪些部分组成、如何交互、以及为什么这样选择的决策集合，尤其是那些"改起来很贵"的决策。</p>
+        <p class="gloss-entry__why">架构的本质是取舍：简单换灵活、性能换成本、一致换可用。脱离约束谈架构没有意义。</p>
+      </div>
+
+      <div class="gloss-entry">
+        <div class="gloss-entry__head"><span class="gloss-entry__term">单体与微服务</span><span class="gloss-entry__en">Monolith / Microservices</span></div>
+        <p class="gloss-entry__def">单体是一个代码库、一次部署、一个进程；微服务按业务拆成多个可独立部署的服务，各自有数据库与生命周期。</p>
+        <p class="gloss-entry__why">微服务换来独立伸缩与团队解耦，代价是分布式事务、运维复杂度、调试难度剧增。团队小于十人时，单体几乎总是更优选择。</p>
+      </div>
+
+      <div class="gloss-entry">
+        <div class="gloss-entry__head"><span class="gloss-entry__term">分层架构</span><span class="gloss-entry__en">Layered Architecture</span></div>
+        <p class="gloss-entry__def">按职责把代码分成表现层、业务层、数据访问层，上层依赖下层，不允许反向依赖与跨层调用。</p>
+        <p class="gloss-entry__why">它让"改数据库"只需要动最下面一层。代价是每多一层就多一次调用与理解成本，层数要克制。</p>
+      </div>
+
+      <div class="gloss-entry">
+        <div class="gloss-entry__head"><span class="gloss-entry__term">MVC</span><span class="gloss-entry__en">Model-View-Controller</span></div>
+        <p class="gloss-entry__def">模型管数据与业务、视图管展示、控制器管接收请求与调度。MVVM 是它的前端变体，用数据绑定自动同步视图。</p>
+        <p class="gloss-entry__why">它是理解几乎所有 Web 框架目录结构的钥匙，也是"控制器里不该写业务逻辑"这条规则的来源。</p>
+      </div>
+
+      <div class="gloss-entry">
+        <div class="gloss-entry__head"><span class="gloss-entry__term">高内聚低耦合</span><span class="gloss-entry__en">High Cohesion, Low Coupling</span></div>
+        <p class="gloss-entry__def">高内聚指模块内部元素高度相关；低耦合指模块之间依赖尽可能少、尽可能稳定。</p>
+        <p class="gloss-entry__why">它是评价一切代码组织方式（分层、组件化、微服务）的通用标尺，也是重构时最实用的方向指引。</p>
+      </div>
+
+      <div class="gloss-entry">
+        <div class="gloss-entry__head"><span class="gloss-entry__term">技术债</span><span class="gloss-entry__en">Technical Debt</span></div>
+        <p class="gloss-entry__def">为快速交付而选择的次优方案，未来需要额外成本偿还（重构、补测试、修隐患）。</p>
+        <p class="gloss-entry__why">它不是道德问题而是财务问题：关键在于"有没有记账"和"有利息吗"。有意识地欠债可以接受，假装不存在才是灾难。</p>
+      </div>
+
+      <div class="gloss-entry">
+        <div class="gloss-entry__head"><span class="gloss-entry__term">高可用</span><span class="gloss-entry__en">High Availability, HA</span></div>
+        <p class="gloss-entry__def">通过冗余与自动故障转移，让系统在部分组件故障时仍能提供服务。</p>
+        <p class="gloss-entry__why">单机永远做不到高可用，因为硬件必然故障。可用性是用成本买来的，先算清停机一分钟的损失再决定投入。</p>
+      </div>
+
+      <div class="gloss-entry">
+        <div class="gloss-entry__head"><span class="gloss-entry__term">无状态设计</span><span class="gloss-entry__en">Stateless Design</span></div>
+        <p class="gloss-entry__def">应用实例本身不保存请求之间的状态，所有状态外置到数据库、Redis 或由客户端携带。</p>
+        <p class="gloss-entry__why">它是水平扩展的前提：任意实例可被随意创建、销毁、重启，用户毫无感知。是架构中最重要的约束之一。</p>
+      </div>
+
+      <div class="gloss-entry">
+        <div class="gloss-entry__head"><span class="gloss-entry__term">CAP 定理</span><span class="gloss-entry__en">Consistency, Availability, Partition tolerance</span></div>
+        <p class="gloss-entry__def">分布式系统无法同时完美满足一致性、可用性、分区容错性。</p>
+        <p class="gloss-entry__why">关键在于理解 P 不可放弃（网络故障必然发生），真正的取舍始终在 C 与 A 之间，且可以按业务分别选择。</p>
+      </div>
+
+      <div class="gloss-entry">
+        <div class="gloss-entry__head"><span class="gloss-entry__term">BASE 与最终一致</span><span class="gloss-entry__en">Basically Available, Soft state, Eventually consistent</span></div>
+        <p class="gloss-entry__def">放弃强一致，用基本可用、允许中间状态、最终收敛来换取扩展性与可用性。</p>
+        <p class="gloss-entry__why">它是 AP 路线的工程化表达。判断标准很明确：这笔数据算错会不会造成不可挽回的损失。</p>
+      </div>
+
+      <div class="gloss-entry">
+        <div class="gloss-entry__head"><span class="gloss-entry__term">分布式事务</span><span class="gloss-entry__en">Distributed Transaction / Saga / TCC</span></div>
+        <p class="gloss-entry__def">跨多个服务或数据库的事务解决方案，无法用单库 ACID，只能靠补偿（Saga）或预留确认（TCC）实现最终一致。</p>
+        <p class="gloss-entry__why">这是微服务带来的最大复杂度之一。最好的策略往往是"不要跨服务拆分事务"——把强一致的部分留在同一个服务内。</p>
+      </div>
+
+      <div class="gloss-entry">
+        <div class="gloss-entry__head"><span class="gloss-entry__term">消息队列</span><span class="gloss-entry__en">Message Queue, MQ</span></div>
+        <p class="gloss-entry__def">生产者把消息写入队列，消费者异步取出处理（RabbitMQ、Kafka、RocketMQ、Redis Stream）。</p>
+        <p class="gloss-entry__why">它同时解决三件事：解耦（不直接调用）、削峰（流量高峰先进队列）、可靠（失败可重试）。代价是引入了异步与最终一致。</p>
+      </div>
+
+      <div class="gloss-entry">
+        <div class="gloss-entry__head"><span class="gloss-entry__term">削峰填谷</span><span class="gloss-entry__en">Peak Shaving</span></div>
+        <p class="gloss-entry__def">把突发的流量高峰写进队列，让后端按自己的处理能力匀速消费。</p>
+        <p class="gloss-entry__why">秒杀、抢购这类场景的核心思路。代价是用户看到的是"排队中"而不是即时结果。</p>
+      </div>
+
+      <div class="gloss-entry">
+        <div class="gloss-entry__head"><span class="gloss-entry__term">死信队列</span><span class="gloss-entry__en">Dead Letter Queue, DLQ</span></div>
+        <p class="gloss-entry__def">存放多次消费失败的消息，避免它们无限重试拖垮系统。</p>
+        <p class="gloss-entry__why">没有死信队列的队列系统会出现"一条坏消息卡住整个队列"，必须有告警并人工/自动处理。</p>
+      </div>
+
+      <div class="gloss-entry">
+        <div class="gloss-entry__head"><span class="gloss-entry__term">限流 / 熔断 / 降级</span><span class="gloss-entry__en">Rate Limiting / Circuit Breaking / Degradation</span></div>
+        <p class="gloss-entry__def"><b>限流</b>限制单位时间请求数；<b>熔断</b>发现下游大量失败时直接快速失败不再调用；<b>降级</b>关闭次要功能保住核心功能。</p>
+        <p class="gloss-entry__why">三者的共同目标是"不要被下游拖死"。故障时"部分可用"远好于"全部雪崩"。</p>
+      </div>
+
+      <div class="gloss-entry">
+        <div class="gloss-entry__head"><span class="gloss-entry__term">重试与指数退避</span><span class="gloss-entry__en">Retry / Exponential Backoff</span></div>
+        <p class="gloss-entry__def">失败后等待一段时间再重试，等待时间逐次翻倍，并加入随机抖动。</p>
+        <p class="gloss-entry__why">无节制的立即重试本身就是一次流量放大攻击。重试前必须确认接口幂等。</p>
+      </div>
+
+      <div class="gloss-entry">
+        <div class="gloss-entry__head"><span class="gloss-entry__term">API 网关</span><span class="gloss-entry__en">API Gateway</span></div>
+        <p class="gloss-entry__def">所有外部请求的统一入口，负责路由、鉴权、限流、协议转换、日志。</p>
+        <p class="gloss-entry__why">它让内部服务不必各自实现这些横切能力，也提供了"改架构不改客户端"的缓冲层。</p>
+      </div>
+
+      <div class="gloss-entry">
+        <div class="gloss-entry__head"><span class="gloss-entry__term">服务发现与配置中心</span><span class="gloss-entry__en">Service Discovery / Config Center</span></div>
+        <p class="gloss-entry__def">服务发现让服务之间知道彼此的地址（因为实例会动态增减）；配置中心让配置在运行时统一下发与热更新。</p>
+        <p class="gloss-entry__why">在容器化、弹性伸缩的环境里，实例 IP 是随时变化的，写死地址必然失效。</p>
+      </div>
+
+      <div class="gloss-entry">
+        <div class="gloss-entry__head"><span class="gloss-entry__term">分布式锁</span><span class="gloss-entry__en">Distributed Lock</span></div>
+        <p class="gloss-entry__def">在多个实例之间互斥访问共享资源的手段，通常基于 Redis 或协调服务（etcd、ZooKeeper）实现。</p>
+        <p class="gloss-entry__why">"多实例同时跑定时任务导致重复执行"是最常见的痛点。但能用数据库唯一约束解决时，就不要引入分布式锁。</p>
+      </div>
+
+      <div class="gloss-entry">
+        <div class="gloss-entry__head"><span class="gloss-entry__term">特性开关</span><span class="gloss-entry__en">Feature Flag</span></div>
+        <p class="gloss-entry__def">把功能是否启用做成可远程切换的配置项，无需重新部署即可开关。</p>
+        <p class="gloss-entry__why">出问题时"关掉开关"比"回滚发版"快得多，也是灰度发布与 A/B 测试的基础设施。</p>
+      </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <h2 id="g-deploy">六、部署与运维</h2>
+    <div class="gloss-list">
+
+      <div class="gloss-entry">
+        <div class="gloss-entry__head"><span class="gloss-entry__term">部署</span><span class="gloss-entry__en">Deployment</span></div>
+        <p class="gloss-entry__def">把某个确定版本的代码以可重复的方式放到运行环境中，并让它持续提供服务。</p>
+        <p class="gloss-entry__why">关键词是"可重复"：如果第二次部署需要回忆敲过哪些命令，那就不是部署，而是碰运气。</p>
+      </div>
+
+      <div class="gloss-entry">
+        <div class="gloss-entry__head"><span class="gloss-entry__term">环境划分</span><span class="gloss-entry__en">Dev / Test / Staging / Prod</span></div>
+        <p class="gloss-entry__def">开发、测试、预发（Staging）、生产。预发环境应尽量与生产一致，用于发布前的最后验证。</p>
+        <p class="gloss-entry__why">"预发没问题，上线就炸"通常是因为预发与生产的配置、数据量或依赖版本不一致。</p>
+      </div>
+
+      <div class="gloss-entry">
+        <div class="gloss-entry__head"><span class="gloss-entry__term">构建产物与制品</span><span class="gloss-entry__en">Build Output / Artifact</span></div>
+        <p class="gloss-entry__def">源码经构建后产生的可部署文件（<code>dist/</code>、jar、二进制、Docker 镜像）。</p>
+        <p class="gloss-entry__why">部署的应该是制品，而不是现场在服务器上编译源码——后者会让"这次发布的到底是什么版本"变得不可知。</p>
+      </div>
+
+      <div class="gloss-entry">
+        <div class="gloss-entry__head"><span class="gloss-entry__term">不可变基础设施</span><span class="gloss-entry__en">Immutable Infrastructure</span></div>
+        <p class="gloss-entry__def">服务器或容器一旦部署就不再修改；需要变更时用新版本替换旧的，而不是登录上去改文件。</p>
+        <p class="gloss-entry__why">手工改过的服务器会成为"谁也说不清状态的怪物"，无法复制、无法回滚。这是容器化带来的最大观念转变。</p>
+      </div>
+
+      <div class="gloss-entry">
+        <div class="gloss-entry__head"><span class="gloss-entry__term">容器与镜像</span><span class="gloss-entry__en">Container / Image</span></div>
+        <p class="gloss-entry__def">镜像是只读的模板（分层叠加），容器是镜像的运行实例；容器共享宿主内核，比虚拟机轻量得多。</p>
+        <p class="gloss-entry__why">它把"运行时 + 依赖 + 代码"打成一个整体，从根本上消除了"我这里能跑"。注意：容器不是虚拟机，不能当虚拟机用。</p>
+      </div>
+
+      <div class="gloss-entry">
+        <div class="gloss-entry__head"><span class="gloss-entry__term">编排</span><span class="gloss-entry__en">Orchestration / Kubernetes / Pod</span></div>
+        <p class="gloss-entry__def">自动管理大量容器的调度、扩缩容、健康检查与滚动更新。K8s 是最主流的编排系统，Pod 是它的最小调度单位。</p>
+        <p class="gloss-entry__why">容器少的时候用 Compose 就够；数量与团队规模上来后才有编排的需求，过早引入会带来巨大的学习与运维成本。</p>
+      </div>
+
+      <div class="gloss-entry">
+        <div class="gloss-entry__head"><span class="gloss-entry__term">CI / CD</span><span class="gloss-entry__en">Continuous Integration / Delivery / Deployment</span></div>
+        <p class="gloss-entry__def"><b>CI</b>：每次提交自动跑检查与测试；<b>CD（交付）</b>：自动构建并推到可发布状态、人工点一下发布；<b>CD（部署）</b>：通过测试后自动上线。</p>
+        <p class="gloss-entry__why">它把"发布"从一件需要小心翼翼的大事变成日常动作，因此每次发布的变更量变小、风险也随之下降。</p>
+      </div>
+
+      <div class="gloss-entry">
+        <div class="gloss-entry__head"><span class="gloss-entry__term">蓝绿部署</span><span class="gloss-entry__en">Blue-Green Deployment</span></div>
+        <p class="gloss-entry__def">维护两套完全相同的环境，新版本部署到空闲那套，验证通过后把流量整体切过去。</p>
+        <p class="gloss-entry__why">切流量是秒级的，回滚也是秒级的。代价是需要双倍资源，且要处理数据库变更的兼容问题。</p>
+      </div>
+
+      <div class="gloss-entry">
+        <div class="gloss-entry__head"><span class="gloss-entry__term">金丝雀发布</span><span class="gloss-entry__en">Canary Release</span></div>
+        <p class="gloss-entry__def">先让极小部分流量（1%～5%）走新版本，观察指标正常后再逐步放大比例。</p>
+        <p class="gloss-entry__why">它把风险限制在可控范围内，是"用真实流量验证"的最佳实践。前提是监控足够细，能看出这 1% 是否异常。</p>
+      </div>
+
+      <div class="gloss-entry">
+        <div class="gloss-entry__head"><span class="gloss-entry__term">回滚</span><span class="gloss-entry__en">Rollback</span></div>
+        <p class="gloss-entry__def">把服务切回上一个已知可用的版本。</p>
+        <p class="gloss-entry__why">回滚必须比发布更快，这是硬性要求。所以镜像要打 commit 版本号并保留最近几个版本，而不是只推 <code>latest</code>。</p>
+      </div>
+
+      <div class="gloss-entry">
+        <div class="gloss-entry__head"><span class="gloss-entry__term">健康检查</span><span class="gloss-entry__en">Health Check</span></div>
+        <p class="gloss-entry__def">一个供编排系统与负载均衡判断服务是否可用的端点（如 <code>/healthz</code>），通常还会检查数据库与缓存连通性。</p>
+        <p class="gloss-entry__why">它是自动化部署、自动摘除故障实例的基础。没有它，负载均衡只能靠猜。</p>
+      </div>
+
+      <div class="gloss-entry">
+        <div class="gloss-entry__head"><span class="gloss-entry__term">Serverless / FaaS</span><span class="gloss-entry__en">Function as a Service</span></div>
+        <p class="gloss-entry__def">只上传函数代码，平台负责运行、扩缩容与计费，按调用次数与执行时长收费。</p>
+        <p class="gloss-entry__why">省掉了服务器运维，但存在冷启动延迟、执行时长上限、调试困难等约束，适合事件驱动的轻量任务。</p>
+      </div>
+
+      <div class="gloss-entry">
+        <div class="gloss-entry__head"><span class="gloss-entry__term">可观测性</span><span class="gloss-entry__en">Observability</span></div>
+        <p class="gloss-entry__def">通过<b>指标</b>（可聚合的数值）、<b>日志</b>（离散事件记录）、<b>链路追踪</b>（一次请求跨服务的完整路径）来推断系统内部状态。</p>
+        <p class="gloss-entry__why">监控让你知道"出问题了"，可观测性让你回答"为什么出问题"。三者缺一，排查就只能靠猜。</p>
+      </div>
+
+      <div class="gloss-entry">
+        <div class="gloss-entry__head"><span class="gloss-entry__term">SLI / SLO / SLA</span><span class="gloss-entry__en">Indicator / Objective / Agreement</span></div>
+        <p class="gloss-entry__def"><b>SLI</b> 是实际测量到的指标（如成功率 99.93%）；<b>SLO</b> 是内部目标（≥99.9%）；<b>SLA</b> 是对客户的承诺，违反要赔偿。</p>
+        <p class="gloss-entry__why">没有目标就无法判断"现在算不算故障"。SLO 也是"该不该暂停发版去修稳定性"的决策依据。</p>
+      </div>
+
+      <div class="gloss-entry">
+        <div class="gloss-entry__head"><span class="gloss-entry__term">MTTR / MTBF</span><span class="gloss-entry__en">Mean Time To Recovery / Between Failures</span></div>
+        <p class="gloss-entry__def">MTTR 是平均恢复时间；MTBF 是平均故障间隔。</p>
+        <p class="gloss-entry__why">运维的目标就是"减少故障发生（提高 MTBF）+ 加快恢复（降低 MTTR）"。而降低 MTTR 往往见效更快、成本更低。</p>
+      </div>
+
+      <div class="gloss-entry">
+        <div class="gloss-entry__head"><span class="gloss-entry__term">告警与值班</span><span class="gloss-entry__en">Alerting / On-call</span></div>
+        <p class="gloss-entry__def">按严重级别把异常通知到对应的人，并约定响应时限。</p>
+        <p class="gloss-entry__why">告警最大的敌人是"狼来了"。只对需要人介入的事件告警，并定期删除从未被处理的规则。</p>
+      </div>
+
+      <div class="gloss-entry">
+        <div class="gloss-entry__head"><span class="gloss-entry__term">Runbook</span><span class="gloss-entry__en">Runbook</span></div>
+        <p class="gloss-entry__def">针对某类故障的标准处理手册：如何确认、第一步做什么、如何止损、如何回滚。</p>
+        <p class="gloss-entry__why">它让你在半夜三点头脑不清时也能正确操作，也让其他人能接替处理。写一次，收益很多年。</p>
+      </div>
+
+      <div class="gloss-entry">
+        <div class="gloss-entry__head"><span class="gloss-entry__term">复盘</span><span class="gloss-entry__en">Postmortem</span></div>
+        <p class="gloss-entry__def">故障恢复后写下的分析文档：时间线、根因、影响、改进项（含负责人与截止时间）。</p>
+        <p class="gloss-entry__why">目的是不再犯，不是追责。没有复盘的故障一定会以另一种形式再来一次。</p>
+      </div>
+
+      <div class="gloss-entry">
+        <div class="gloss-entry__head"><span class="gloss-entry__term">备份、RPO 与 RTO</span><span class="gloss-entry__en">Backup / Recovery Point &amp; Time Objective</span></div>
+        <p class="gloss-entry__def"><b>RPO</b> 是最多能接受丢多少数据（决定备份频率）；<b>RTO</b> 是最多能接受停多久（决定恢复手段）。</p>
+        <p class="gloss-entry__why">先明确这两个数字，才能决定备份策略与投入。备份的 3-2-1 原则与"必须演练恢复"是配套的铁律。</p>
+      </div>
+
+      <div class="gloss-entry">
+        <div class="gloss-entry__head"><span class="gloss-entry__term">压测与性能指标</span><span class="gloss-entry__en">Load Testing / QPS / P95 / P99</span></div>
+        <p class="gloss-entry__def"><b>QPS</b> 每秒查询数；<b>TPS</b> 每秒事务数；<b>并发数</b> 同时在处理的请求数；<b>P95/P99</b> 95%/99% 的请求快于该值。</p>
+        <p class="gloss-entry__why">平均值会掩盖长尾问题。P99 是真实用户的糟糕体验，而扩容决策必须看它而不是平均值。</p>
+      </div>
+
+      <div class="gloss-entry">
+        <div class="gloss-entry__head"><span class="gloss-entry__term">日志轮转</span><span class="gloss-entry__en">Log Rotation</span></div>
+        <p class="gloss-entry__def">按时间或大小切分、压缩、删除旧日志文件的机制（logrotate、Docker 的 max-size/max-file）。</p>
+        <p class="gloss-entry__why">不做轮转，日志会撑满磁盘，导致数据库无法写入 —— 这是最典型的"自己把自己搞挂"。</p>
+      </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <h2 id="g-security">七、安全</h2>
+    <div class="gloss-list">
+
+      <div class="gloss-entry">
+        <div class="gloss-entry__head"><span class="gloss-entry__term">认证与授权</span><span class="gloss-entry__en">Authentication / Authorization</span></div>
+        <p class="gloss-entry__def"><b>认证</b>解决"你是谁"（登录）；<b>授权</b>解决"你能做什么"（权限）。</p>
+        <p class="gloss-entry__why">只做了认证而忘了授权，就会出现"普通用户能访问管理接口"。这是新手最常犯的安全错误。</p>
+      </div>
+
+      <div class="gloss-entry">
+        <div class="gloss-entry__head"><span class="gloss-entry__term">最小权限原则</span><span class="gloss-entry__en">Principle of Least Privilege</span></div>
+        <p class="gloss-entry__def">任何账号、进程、服务只授予完成其工作所必需的最小权限。</p>
+        <p class="gloss-entry__why">它决定了"被攻破之后损失有多大"。应用不用 root 运行、数据库账号只给必要表权限，都是在限制爆炸半径。</p>
+      </div>
+
+      <div class="gloss-entry">
+        <div class="gloss-entry__head"><span class="gloss-entry__term">哈希、加盐与 bcrypt</span><span class="gloss-entry__en">Hashing / Salt / bcrypt</span></div>
+        <p class="gloss-entry__def">哈希是单向摘要；加盐是给每个用户拼接随机串后再哈希，防止彩虹表；bcrypt/argon2 是<b>故意设计得很慢</b>的哈希算法。</p>
+        <p class="gloss-entry__why">数据库泄露时，慢哈希能让攻击者的爆破成本提高几个数量级。绝对不能用 MD5/SHA1 存密码。</p>
+      </div>
+
+      <div class="gloss-entry">
+        <div class="gloss-entry__head"><span class="gloss-entry__term">对称加密与非对称加密</span><span class="gloss-entry__en">Symmetric / Asymmetric Encryption</span></div>
+        <p class="gloss-entry__def">对称加密双方用同一把密钥（快）；非对称用公钥加密、私钥解密（慢但可安全分发公钥）。</p>
+        <p class="gloss-entry__why">HTTPS 就是把两者组合使用的范例：用非对称安全交换密钥，用对称加密实际数据。</p>
+      </div>
+
+      <div class="gloss-entry">
+        <div class="gloss-entry__head"><span class="gloss-entry__term">数字签名</span><span class="gloss-entry__en">Digital Signature</span></div>
+        <p class="gloss-entry__def">用私钥对内容的摘要签名，任何人可用公钥验证"内容没被改且确实来自私钥持有者"。</p>
+        <p class="gloss-entry__why">证书、JWT、Webhook 回调校验、接口防篡改全都基于它。理解了它，这些机制就不再是"黑魔法"。</p>
+      </div>
+
+      <div class="gloss-entry">
+        <div class="gloss-entry__head"><span class="gloss-entry__term">XSS</span><span class="gloss-entry__en">Cross-Site Scripting</span></div>
+        <p class="gloss-entry__def">攻击者把恶意脚本注入页面，在受害者浏览器中执行，从而窃取 Cookie、Token 或伪造操作。</p>
+        <p class="gloss-entry__why">防御核心是"输出转义 + 不用 innerHTML 拼接用户输入 + CSP 响应头"，而不是靠前端过滤关键字。</p>
+      </div>
+
+      <div class="gloss-entry">
+        <div class="gloss-entry__head"><span class="gloss-entry__term">CSRF</span><span class="gloss-entry__en">Cross-Site Request Forgery</span></div>
+        <p class="gloss-entry__def">攻击者诱导已登录用户在不知情的情况下向你的站点发起请求（利用 Cookie 自动携带的特性）。</p>
+        <p class="gloss-entry__why">防御靠 <code>SameSite</code> Cookie、CSRF Token、校验 Origin/Referer。用 Token 放在请求头里的方案天然免疫。</p>
+      </div>
+
+      <div class="gloss-entry">
+        <div class="gloss-entry__head"><span class="gloss-entry__term">SQL 注入</span><span class="gloss-entry__en">SQL Injection</span></div>
+        <p class="gloss-entry__def">把用户输入拼进 SQL 语句，使得输入被当作 SQL 代码执行，从而读取、篡改或删除数据。</p>
+        <p class="gloss-entry__why">防御方式只有一种正确答案：<b>参数化查询</b>。所有"过滤特殊字符"的方案都是不完整的。</p>
+      </div>
+
+      <div class="gloss-entry">
+        <div class="gloss-entry__head"><span class="gloss-entry__term">越权访问（IDOR）</span><span class="gloss-entry__en">Insecure Direct Object Reference</span></div>
+        <p class="gloss-entry__def">接口只依赖 URL 参数定位数据，不校验归属，导致改一个 ID 就能看到别人的数据。</p>
+        <p class="gloss-entry__why">这是真实系统里最高频的漏洞之一。原则很简单：<b>每条查询都要带上当前用户的约束</b>，或在服务层显式校验归属。</p>
+      </div>
+
+      <div class="gloss-entry">
+        <div class="gloss-entry__head"><span class="gloss-entry__term">SSRF</span><span class="gloss-entry__en">Server-Side Request Forgery</span></div>
+        <p class="gloss-entry__def">诱导服务端去请求攻击者指定的地址，从而访问内网服务或云厂商的元数据接口获取凭证。</p>
+        <p class="gloss-entry__why">凡是"用户能提供 URL 让服务器去抓取"的功能（图片抓取、Webhook 测试、URL 预览）都必须做地址白名单。</p>
+      </div>
+
+      <div class="gloss-entry">
+        <div class="gloss-entry__head"><span class="gloss-entry__term">中间人攻击</span><span class="gloss-entry__en">Man-in-the-Middle, MITM</span></div>
+        <p class="gloss-entry__def">攻击者插入到通信双方之间，可窃听与篡改流量。</p>
+        <p class="gloss-entry__why">HTTPS 存在的首要理由就是对抗它。这也是"不要忽略浏览器证书警告"的原因。</p>
+      </div>
+
+      <div class="gloss-entry">
+        <div class="gloss-entry__head"><span class="gloss-entry__term">DDoS</span><span class="gloss-entry__en">Distributed Denial of Service</span></div>
+        <p class="gloss-entry__def">用大量分布式流量打满目标带宽或连接数，使正常用户无法访问。</p>
+        <p class="gloss-entry__why">单机基本无法抵御，必须依赖 CDN/云的清洗能力。前提是提前接入（攻击发生后再接往往来不及）。</p>
+      </div>
+
+      <div class="gloss-entry">
+        <div class="gloss-entry__head"><span class="gloss-entry__term">供应链攻击</span><span class="gloss-entry__en">Supply Chain Attack</span></div>
+        <p class="gloss-entry__def">通过污染你依赖的第三方包（或其传递依赖）来植入恶意代码。</p>
+        <p class="gloss-entry__why">现代项目动辄依赖上千个包。必须提交锁文件、锁定版本、定期跑 <code>npm audit</code>/Dependabot 并关注高危漏洞。</p>
+      </div>
+
+      <div class="gloss-entry">
+        <div class="gloss-entry__head"><span class="gloss-entry__term">漏洞、CVE 与补丁</span><span class="gloss-entry__en">Vulnerability / CVE / Patch</span></div>
+        <p class="gloss-entry__def">CVE 是对公开漏洞的统一编号；补丁是修复该漏洞的新版本。</p>
+        <p class="gloss-entry__why">"已知漏洞未修补"是最常见的入侵入口。建立"每周查看依赖与系统更新"的例行习惯，成本极低收益极高。</p>
+      </div>
+
+      <div class="gloss-entry">
+        <div class="gloss-entry__head"><span class="gloss-entry__term">WAF</span><span class="gloss-entry__en">Web Application Firewall</span></div>
+        <p class="gloss-entry__def">部署在流量入口的防护层，按规则拦截常见的注入、扫描、恶意请求。</p>
+        <p class="gloss-entry__why">它是"雨伞"不是"屋顶"：能挡住大量自动化攻击与扫描，但不能替代代码层面的安全实践。</p>
+      </div>
+
+      <div class="gloss-entry">
+        <div class="gloss-entry__head"><span class="gloss-entry__term">安全响应头</span><span class="gloss-entry__en">CSP / HSTS / X-Frame-Options</span></div>
+        <p class="gloss-entry__def"><b>CSP</b> 限制页面能加载哪些来源的脚本；<b>HSTS</b> 强制浏览器以后只用 HTTPS；<b>X-Frame-Options</b> 禁止页面被嵌套（防点击劫持）。</p>
+        <p class="gloss-entry__why">几行配置就能显著提高攻击门槛，属于性价比极高的加固措施。</p>
+      </div>
+
+      <div class="gloss-entry">
+        <div class="gloss-entry__head"><span class="gloss-entry__term">审计日志</span><span class="gloss-entry__en">Audit Log</span></div>
+        <p class="gloss-entry__def">记录"谁在什么时候从哪里做了什么敏感操作"的日志，通常只增不改。</p>
+        <p class="gloss-entry__why">出了安全事件时，它是唯一能还原真相的证据；在合规要求下也是硬性需求。</p>
+      </div>
+
+      <div class="gloss-entry">
+        <div class="gloss-entry__head"><span class="gloss-entry__term">数据脱敏</span><span class="gloss-entry__en">Data Masking</span></div>
+        <p class="gloss-entry__def">对手机号、身份证、银行卡等敏感字段做掩码展示或加密存储，仅在必要时解密。</p>
+        <p class="gloss-entry__why">既满足业务需要又降低泄露风险。日志里打印完整手机号是常见且严重的疏忽。</p>
+      </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <h2 id="confusing">八、最容易混淆的 12 组概念</h2>
+    <p>下面这些词经常被混着说，但它们的区别一旦搞清，很多困惑会立刻消失。</p>
+
+    <div class="table-wrap">
+      <table class="table-key">
+        <thead><tr><th>易混概念</th><th>关键区别</th><th>一句话记住</th></tr></thead>
+        <tbody>
+          <tr>
+            <td>互联网 / 万维网</td>
+            <td>前者是网络基础设施，后者是跑在上面的一种服务</td>
+            <td>公路 vs 公路上跑的车</td>
+          </tr>
+          <tr>
+            <td>正向代理 / 反向代理</td>
+            <td>代理的是客户端还是服务端</td>
+            <td>客户端的替身 vs 服务端的门卫</td>
+          </tr>
+          <tr>
+            <td>Cookie / Session / Token</td>
+            <td>浏览器存储机制 / 服务端状态 / 客户端凭证</td>
+            <td>Cookie 是信封，Session 是档案柜，Token 是通行证</td>
+          </tr>
+          <tr>
+            <td>认证 / 授权</td>
+            <td>你是谁 / 你能做什么</td>
+            <td>先验身份，再查权限，两步都不能少</td>
+          </tr>
+          <tr>
+            <td>加密 / 哈希 / 编码</td>
+            <td>可逆且有密钥 / 不可逆 / 可逆且无密钥</td>
+            <td>Base64 不是加密，MD5 不能存密码</td>
+          </tr>
+          <tr>
+            <td>进程 / 线程 / 协程</td>
+            <td>隔离性、开销、调度者不同</td>
+            <td>独立房子 / 同一房子的多个房间 / 房间里的多个分身</td>
+          </tr>
+          <tr>
+            <td>并发 / 并行</td>
+            <td>结构 vs 物理同时</td>
+            <td>并发是"能同时处理"，并行是"真在同时跑"</td>
+          </tr>
+          <tr>
+            <td>同步异步 / 阻塞非阻塞</td>
+            <td>要不要等结果 / 等待时能否干别的</td>
+            <td>两对概念，不要当成一件事</td>
+          </tr>
+          <tr>
+            <td>缓存 / 持久化</td>
+            <td>可丢失的加速层 / 必须可靠存储的数据</td>
+            <td>缓存丢了会变慢，数据丢了会出事</td>
+          </tr>
+          <tr>
+            <td>强一致 / 最终一致</td>
+            <td>任何时刻都能读到最新值 / 过一段时间才一致</td>
+            <td>余额要强一致，点赞数可以最终一致</td>
+          </tr>
+          <tr>
+            <td>垂直扩展 / 水平扩展</td>
+            <td>把机器变强 / 把机器变多</td>
+            <td>加配置 vs 加实例，后者要求无状态</td>
+          </tr>
+          <tr>
+            <td>限流 / 熔断 / 降级</td>
+            <td>限制进入 / 停止调用下游 / 关掉次要功能</td>
+            <td>三者目标相同：别让一处故障拖垮全站</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout callout--tip">
+      <span class="callout__ico">🧠</span>
+      <div>
+        <strong>怎么判断自己"真的理解了"一个术语</strong>
+        <p>用三句话自测：<b>① 它解决什么问题（为什么存在）；② 它的代价是什么（换来了什么损失）；③ 什么情况下不该用它。</b>
+        能答出第三点，才算真的懂了 —— 只会复述定义的人，通常答不出第二点和第三点。</p>
+      </div>
+    </div>
+
+    <div class="pager">
+      <a class="prev" href="concepts.html"><span>上一篇</span><b>← 原理与概念</b></a>
+      <a class="next" href="frontend.html"><span>下一篇</span><b>前端基础 →</b></a>
+    </div>
+  </main>
+
+  <aside class="toc" aria-label="本页目录"></aside>
+</div>
+
+<div class="mask"></div>
+
+<footer class="footer">
+  <div class="footer__grid">
+    <div>
+      <h5>原理篇</h5>
+      <ul>
+        <li><a href="concepts.html">原理与概念</a></li>
+        <li><a href="glossary.html">专业术语词典</a></li>
+      </ul>
+    </div>
+    <div>
+      <h5>基础 / 工程</h5>
+      <ul>
+        <li><a href="frontend.html">前端基础</a></li>
+        <li><a href="languages.html">后端语言选型</a></li>
+        <li><a href="architecture.html">搭建思路</a></li>
+        <li><a href="deployment.html">部署思路</a></li>
+        <li><a href="ops.html">运维思路</a></li>
+      </ul>
+    </div>
+    <div>
+      <h5>词典分类</h5>
+      <ul>
+        <li><a href="#g-network">网络与协议</a></li>
+        <li><a href="#g-db">数据库</a></li>
+        <li><a href="#g-arch">架构</a></li>
+        <li><a href="#g-security">安全</a></li>
+      </ul>
+    </div>
+    <div>
+      <h5>关于</h5>
+      <ul>
+        <li><a href="../index.html#principles">六条核心原则</a></li>
+        <li><a href="../index.html#faq">常见问题</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="footer__bottom">
+    <span>网站开发基础教程 · 专业术语词典</span>
+    <span>搜索快捷键 <code>/</code></span>
+  </div>
+</footer>
+
+<script src="../assets/js/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>网站开发基础教程 · 从入门到上线运维</title>
+<meta name="description" content="一套完整的网站开发基础教程：前端基础、后端语言选型、搭建思路、部署思路、运维思路，适合零基础到能独立上线的开发者。">
+<link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body data-root="">
+<div id="progress"></div>
+
+<header class="topbar">
+  <button class="topbar__burger" type="button" aria-label="打开导航">☰</button>
+  <a class="brand" href="index.html">
+    <span class="brand__logo">W</span>
+    <span>网站开发基础教程</span>
+    <span class="brand__sub">Web Dev Handbook</span>
+  </a>
+  <div class="topbar__spacer"></div>
+  <nav class="topbar__nav">
+    <a class="is-active" href="index.html">首页</a>
+    <a href="pages/concepts.html">原理</a>
+    <a href="pages/glossary.html">词典</a>
+    <a href="pages/frontend.html">前端</a>
+    <a href="pages/languages.html">后端</a>
+    <a href="pages/architecture.html">搭建</a>
+    <a href="pages/deployment.html">部署</a>
+    <a href="pages/ops.html">运维</a>
+  </nav>
+  <button class="icon-btn" id="themeBtn" type="button" aria-label="切换主题">☾</button>
+</header>
+
+<div class="layout">
+  <aside class="sidebar" aria-label="章节导航"></aside>
+
+  <main class="content">
+    <section class="hero">
+      <span class="eyebrow">● 零基础 → 独立上线</span>
+      <h1>网站开发基础教程</h1>
+      <p class="lede">
+        从「一个网页是怎么被浏览器渲染出来的」，到「一台服务器上跑起自己的站点」，再到「半夜报警了怎么办」。
+        这份教程把网站开发拆成 <b>前端基础 → 后端语言 → 搭建思路 → 部署思路 → 运维思路</b> 五个阶段，
+        每个阶段都给出可执行的命令、可复制的代码和真实的坑。
+      </p>
+      <div class="hero__cta">
+        <a class="btn btn--primary" href="pages/concepts.html">从原理与概念开始 →</a>
+        <a class="btn btn--ghost" href="pages/glossary.html">查专业术语词典</a>
+        <a class="btn btn--ghost" href="#roadmap">看学习路线</a>
+      </div>
+
+      <div class="stats">
+        <div class="stat"><div class="stat__num">7</div><div class="stat__label">个章节</div></div>
+        <div class="stat"><div class="stat__num">180+</div><div class="stat__label">专业术语解释</div></div>
+        <div class="stat"><div class="stat__num">5</div><div class="stat__label">学习阶段</div></div>
+        <div class="stat"><div class="stat__num">40+</div><div class="stat__label">可直接复制的命令</div></div>
+      </div>
+    </section>
+
+    <h2 id="roadmap">学习路线图</h2>
+    <p class="lede">
+      网站开发本质上只有三件事：<b>把数据存起来</b>、<b>按规则取出来</b>、<b>漂亮地展示给用户</b>。
+      下面五个阶段建议按顺序走，但不必等前一阶段"学完"再进下一步 —— 越早把一个完整项目跑通，学得越快。
+    </p>
+
+    <ol class="steps">
+      <li>
+        <h4>阶段零：先建立概念地图（3～5 天）</h4>
+        <p>不写代码，先把「网站是怎么工作的」搞清楚：请求—响应模型、网络分层、HTTP 协议的性质、并发与进程、无状态与身份识别、分层与耦合、CAP 与一致性。这些是后面所有技术的共同地基，先读一遍能省下后期无数次的困惑。</p>
+        <p><a href="pages/concepts.html">进入原理与概念篇 →</a> · <a href="pages/glossary.html">随时查阅专业术语词典 →</a></p>
+      </li>
+      <li>
+        <h4>阶段一：前端基础（1～2 个月）</h4>
+        <p>HTML 描述结构、CSS 描述样式、JavaScript 描述行为。目标是能不看教程手写一个响应式静态页面，理解浏览器渲染流程与 DOM 事件模型。</p>
+        <p><a href="pages/frontend.html">进入前端基础篇 →</a></p>
+      </li>
+      <li>
+        <h4>阶段二：选择一门后端语言（2～3 个月）</h4>
+        <p>Node.js / Python / Java / Go / PHP / C# / Rust / Ruby 任选其一。先掌握「HTTP 请求 → 路由 → 查数据库 → 返回 JSON」这条链路，再谈框架。</p>
+        <p><a href="pages/languages.html">看八种语言对比与示例 →</a></p>
+      </li>
+      <li>
+        <h4>阶段三：数据库与搭建思路</h4>
+        <p>关系型数据库（MySQL / PostgreSQL）是必修课，学会建表、索引、事务、连表查询。然后理解分层架构、API 设计、鉴权与工程目录组织。</p>
+        <p><a href="pages/architecture.html">看搭建思路 →</a></p>
+      </li>
+      <li>
+        <h4>阶段四：把项目部署到公网</h4>
+        <p>买域名 → 解析 DNS → 买服务器 → SSH 登录 → 装运行时 → Nginx 反向代理 → 配 HTTPS。进阶用 Docker 与 CI/CD 把部署变成一条命令。</p>
+        <p><a href="pages/deployment.html">看部署思路 →</a></p>
+      </li>
+      <li>
+        <h4>阶段五：运维与长期可用</h4>
+        <p>上线只是开始。监控、日志、备份、安全加固、性能优化、故障排查 SOP，决定你的站点能不能活过第一年。</p>
+        <p><a href="pages/ops.html">看运维思路 →</a></p>
+      </li>
+    </ol>
+
+    <div class="callout callout--tip">
+      <span class="callout__ico">💡</span>
+      <div>
+        <strong>唯一真正有效的学习方式</strong>
+        <p>不要"学完再做"。从第一天起就给自己定一个可交付的项目（个人博客 / 记账工具 / 订单系统），每学一个知识点就往上加一块功能，三个月后你会得到一个能写进简历的作品。</p>
+      </div>
+    </div>
+
+    <h2 id="modules">七大模块导航</h2>
+    <div class="cards">
+      <a class="card" href="pages/concepts.html">
+        <span class="card__ico">🧠</span>
+        <h3>原理与概念</h3>
+        <p>请求—响应模型、网络分层、HTTP 与 HTTPS、编码与序列化、进程线程并发、状态与身份、渲染模式、分层与耦合、CAP 与一致性。</p>
+        <span class="card__more">开始阅读 →</span>
+      </a>
+      <a class="card" href="pages/glossary.html">
+        <span class="card__ico">📖</span>
+        <h3>专业术语词典</h3>
+        <p>网络、前端、语言运行时、数据库、架构、部署运维、安全共 180+ 词条，每条给出定义与「为什么重要」，并附 12 组易混概念辨析。</p>
+        <span class="card__more">开始查阅 →</span>
+      </a>
+      <a class="card" href="pages/frontend.html">
+        <span class="card__ico">🎨</span>
+        <h3>前端基础</h3>
+        <p>HTML / CSS / JavaScript 三件套、渲染原理、响应式布局、构建工具与框架选型。</p>
+        <span class="card__more">开始阅读 →</span>
+      </a>
+      <a class="card" href="pages/languages.html">
+        <span class="card__ico">⌨️</span>
+        <h3>后端语言选型</h3>
+        <p>八种主流后端语言的特点、生态、最小可行代码与适用场景对比。</p>
+        <span class="card__more">开始阅读 →</span>
+      </a>
+      <a class="card" href="pages/architecture.html">
+        <span class="card__ico">🏗️</span>
+        <h3>搭建思路</h3>
+        <p>分层架构、RESTful API、数据库设计、缓存、鉴权、工程目录与单体/微服务取舍。</p>
+        <span class="card__more">开始阅读 →</span>
+      </a>
+      <a class="card" href="pages/deployment.html">
+        <span class="card__ico">📦</span>
+        <h3>部署思路</h3>
+        <p>域名与 DNS、服务器初始化、Nginx、HTTPS、Docker、CI/CD 与云平台选型。</p>
+        <span class="card__more">开始阅读 →</span>
+      </a>
+      <a class="card" href="pages/ops.html">
+        <span class="card__ico">🛡️</span>
+        <h3>运维思路</h3>
+        <p>监控告警、日志治理、备份恢复、安全加固、性能压测与故障排查 SOP。</p>
+        <span class="card__more">开始阅读 →</span>
+      </a>
+      <a class="card" href="#workflow">
+        <span class="card__ico">🚀</span>
+        <h3>从 0 到 1 全流程</h3>
+        <p>把上面五块拼起来：一个真实项目从需求到上线的完整时间线。</p>
+        <span class="card__more">查看流程 →</span>
+      </a>
+    </div>
+
+    <h2 id="stack">技术栈全景</h2>
+    <p>一个典型 Web 项目在每一层都有若干选择。先看全貌，再逐层做决定 —— 不要一开始就纠结"哪个最好"，选生态活跃、文档齐全、你能招到人的那个。</p>
+
+    <div class="table-wrap">
+      <table class="table-key">
+        <thead>
+          <tr><th>层次</th><th>职责</th><th>常见选择</th><th>初学建议</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>前端</td>
+            <td>渲染界面、交互、请求数据</td>
+            <td>原生三件套、React、Vue、Svelte、Angular</td>
+            <td><span class="tag tag--brand">原生 + Vue/React 二选一</span></td>
+          </tr>
+          <tr>
+            <td>后端</td>
+            <td>业务逻辑、接口、鉴权</td>
+            <td>Node.js、Python、Java、Go、PHP、C#</td>
+            <td><span class="tag tag--brand">Node.js 或 Python</span></td>
+          </tr>
+          <tr>
+            <td>数据库</td>
+            <td>持久化数据</td>
+            <td>MySQL、PostgreSQL、MongoDB、Redis</td>
+            <td><span class="tag tag--brand">PostgreSQL / MySQL + Redis</span></td>
+          </tr>
+          <tr>
+            <td>Web 服务器</td>
+            <td>静态资源、反向代理、TLS</td>
+            <td>Nginx、Caddy、Apache、Traefik</td>
+            <td><span class="tag tag--brand">Nginx</span></td>
+          </tr>
+          <tr>
+            <td>运行环境</td>
+            <td>打包与隔离应用</td>
+            <td>Docker、Podman、裸机 PM2/systemd</td>
+            <td><span class="tag tag--brand">Docker Compose</span></td>
+          </tr>
+          <tr>
+            <td>CI/CD</td>
+            <td>自动测试与发布</td>
+            <td>GitHub Actions、GitLab CI、Jenkins</td>
+            <td><span class="tag tag--brand">GitHub Actions</span></td>
+          </tr>
+          <tr>
+            <td>可观测</td>
+            <td>指标、日志、告警</td>
+            <td>Prometheus + Grafana、Loki、Sentry、Uptime Kuma</td>
+            <td><span class="tag tag--brand">Uptime Kuma + Sentry</span></td>
+          </tr>
+          <tr>
+            <td>托管/云</td>
+            <td>承载访问流量</td>
+            <td>Vercel、Netlify、Cloudflare Pages、腾讯云、AWS</td>
+            <td><span class="tag tag--brand">静态托管 + 云服务器</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>一次请求都经过了什么</h3>
+    <p>理解下面这条链路，你就理解了整个 Web 开发的工作范围。任何一个环节出问题，用户看到的就是"打不开"。</p>
+    <div class="flow">
+      <span class="on">浏览器</span><i>→</i>
+      <span>DNS 解析</span><i>→</i>
+      <span>CDN / TLS</span><i>→</i>
+      <span>Nginx</span><i>→</i>
+      <span>应用服务</span><i>→</i>
+      <span>缓存 Redis</span><i>→</i>
+      <span>数据库</span><i>↩</i>
+      <span>JSON 响应</span><i>→</i>
+      <span>前端渲染</span>
+    </div>
+
+    <div class="code">
+      <div class="code__head"><span class="code__dots"><i></i><i></i><i></i></span><span class="code__lang">Bash · 用一条命令看清链路</span></div>
+      <pre><code># 域名解析到哪个 IP？DNS 有没有生效？
+dig +short example.com
+
+# 完整请求过程：DNS、TCP、TLS、首字节耗时
+curl -o /dev/null -s -w 'DNS:%{time_namelookup}s TCP:%{time_connect}s TLS:%{time_appconnect}s TTFB:%{time_starttransfer}s 总计:%{time_total}s\n' https://example.com
+
+# 服务端返回的头信息：看 Server、Cache-Control、是否走了 CDN
+curl -I https://example.com</code></pre>
+    </div>
+
+    <div class="callout callout--info">
+      <span class="callout__ico">🔗</span>
+      <div>
+        <strong>这条链路上的每个名词是什么？</strong>
+        <p>DNS、TCP、TLS、反向代理、CDN、会话、缓存……这些词的确切含义与"为什么存在"，
+        在 <a href="pages/glossary.html">专业术语词典</a> 里都有单独词条；
+        想知道它们背后的原理（比如为什么需要三次握手、为什么 HTTP 是无状态的），请看
+        <a href="pages/concepts.html">原理与概念篇</a>。</p>
+      </div>
+    </div>
+
+    <h2 id="workflow">从 0 到 1 的完整流程</h2>
+    <p>下面是一个真实项目（以"团队任务管理系统"为例）从需求到上线后稳定运行的完整时间线。注意开发和运维并非前后关系，而是从第二天就交错进行的。</p>
+
+    <ol class="steps">
+      <li>
+        <h4>Day 1｜需求与原型</h4>
+        <p>写下 3～5 个核心用户故事（"作为成员，我能创建任务并指派给同事"）。用 Figma / 即时设计画低保真原型，确定页面清单。不要在这一步纠结配色。</p>
+      </li>
+      <li>
+        <h4>Day 2｜技术选型与仓库初始化</h4>
+        <p>确定后端语言、数据库、部署方式。创建 Git 仓库，写好 <code>.gitignore</code>、<code>README.md</code>、环境变量示例文件 <code>.env.example</code>，约定分支策略（<code>main</code> 保护 + <code>feature/*</code>）。</p>
+      </li>
+      <li>
+        <h4>Day 3～5｜数据库设计</h4>
+        <p>先画 ER 图（实体关系图），再写建表 SQL。把用户、任务、项目、评论等实体和它们的关系定清楚。此时改表成本最低，后改代价极大。</p>
+      </li>
+      <li>
+        <h4>Day 6～10｜后端接口开发</h4>
+        <p>按 RESTful 风格实现接口，先保证能用 <code>curl</code> 调通。同时写好参数校验、统一错误响应、JWT 鉴权中间件。用 Postman / Bruno 保存接口用例。</p>
+      </li>
+      <li>
+        <h4>Day 11～18｜前端页面开发</h4>
+        <p>先做静态页面还原，再接接口。封装统一的请求层（axios 拦截器）处理 token 与错误提示。做到列表、表单、详情三件套完整可用。</p>
+      </li>
+      <li>
+        <h4>Day 19～21｜本地跑通 + 首次部署</h4>
+        <p>买域名和服务器 → 装 Docker → 写 <code>docker-compose.yml</code> → 配置 Nginx 反向代理 → 申请 HTTPS 证书。目标：能在手机 4G 网络下打开自己的网址。</p>
+      </li>
+      <li>
+        <h4>Day 22～25｜自动化与监控</h4>
+        <p>接入 GitHub Actions：推送代码自动跑测试、构建镜像、SSH 部署。装上 Uptime Kuma 做可用性监控，接入 Sentry 收集前端报错，配置数据库每日自动备份。</p>
+      </li>
+      <li>
+        <h4>上线之后｜迭代与演练</h4>
+        <p>每周看一次错误率与慢接口；每月做一次备份恢复演练和依赖安全升级；每次发版都准备好回滚方案。</p>
+      </li>
+    </ol>
+
+    <h2 id="principles">贯穿全站的六条原则</h2>
+    <div class="grid-2">
+      <div class="panel">
+        <h4>1. 先跑通，再优化</h4>
+        <p>一个能上线的丑网站，胜过一百个躺在本地目录里的完美设计。</p>
+      </div>
+      <div class="panel">
+        <h4>2. 一切进版本控制</h4>
+        <p>代码、配置模板、部署脚本、数据库迁移文件都要进 Git。密码和密钥永远不进。</p>
+      </div>
+      <div class="panel">
+        <h4>3. 环境一致</h4>
+        <p>用 Docker 或容器化手段消除"我这里能跑"。开发、测试、生产用同一份镜像。</p>
+      </div>
+      <div class="panel">
+        <h4>4. 默认不信任输入</h4>
+        <p>所有来自客户端的数据都要校验。SQL 参数化、输出转义、密码哈希，缺一不可。</p>
+      </div>
+      <div class="panel">
+        <h4>5. 可观测优先</h4>
+        <p>看不见的系统无法维护。日志、指标、链路追踪要在项目初期就埋点，不能事后补。</p>
+      </div>
+      <div class="panel">
+        <h4>6. 假设一定会挂</h4>
+        <p>磁盘会满、内存会泄漏、证书会过期。为每种情况准备预案，并定期演练。</p>
+      </div>
+    </div>
+
+    <h2 id="resources">学习资源清单</h2>
+    <h3>官方文档（第一优先级）</h3>
+    <ul class="plain-list">
+      <li><span class="k">Web 基础</span><span>MDN Web Docs —— 前端最权威的中文/英文参考，遇到任何 HTML/CSS/JS 问题先查它。</span></li>
+      <li><span class="k">HTTP</span><span>RFC 9110（HTTP 语义）、《HTTP 权威指南》—— 理解状态码、缓存、连接复用。</span></li>
+      <li><span class="k">路径规范</span><span>Node.js / Python / Go 等语言官网的 Get Started 与 Tutorial 章节。</span></li>
+      <li><span class="k">部署</span><span>Nginx 官方文档的 Beginner's Guide、Docker 官方 Get Started。</span></li>
+      <li><span class="k">安全</span><span>OWASP Top 10 —— 每年更新，必读；以及 OWASP Cheat Sheet Series。</span></li>
+    </ul>
+
+    <h3>配套工具（按阶段准备）</h3>
+    <div class="table-wrap">
+      <table class="table-key">
+        <thead><tr><th>阶段</th><th>必备工具</th><th>用途</th></tr></thead>
+        <tbody>
+          <tr><td>写代码</td><td>VS Code</td><td>编辑器；建议装 ESLint、Prettier、GitLens</td></tr>
+          <tr><td>版本控制</td><td>Git + GitHub / Gitee</td><td>代码托管与协作</td></tr>
+          <tr><td>接口调试</td><td>Bruno / Postman / curl</td><td>验证后端接口</td></tr>
+          <tr><td>数据库</td><td>DBeaver / Navicat / psql</td><td>可视化查询与建表</td></tr>
+          <tr><td>服务器连接</td><td>SSH、Termius、FinalShell</td><td>远程管理 Linux</td></tr>
+          <tr><td>部署</td><td>Docker Desktop、Docker Compose</td><td>本地模拟生产环境</td></tr>
+          <tr><td>运维</td><td>Uptime Kuma、Sentry、htop</td><td>监控、报错收集、资源查看</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2 id="faq">常见问题</h2>
+    <div class="accordion">
+      <details open>
+        <summary>我该先学前端还是后端？</summary>
+        <div class="acc-body">
+          <p>没有强制顺序，但推荐<b>先摸前端</b>：它的反馈最快，写一行代码就能在浏览器里看到结果，容易建立正反馈。学到能写静态页面和简单交互（大约 2～4 周）后，立刻转后端，然后做一个前后端都自己写的完整项目。</p>
+          <p>如果目标是后端/运维方向，前端学到"能看懂、能改"即可，不必追求精通 React 全家桶。</p>
+        </div>
+      </details>
+      <details>
+        <summary>需要学多少种语言？</summary>
+        <div class="acc-body">
+          <p><b>一门精通 + 一门会用</b>就够了。语言的语法一周就能上手，难的是生态、并发模型和工程习惯。推荐组合：JavaScript（TypeScript）+ Python；或 Java + JavaScript。</p>
+          <p>不要因为"Go 性能好"就在没写过任何项目的时候去学 Go。性能和并发是解决特定问题的工具，不是入门门槛。</p>
+        </div>
+      </details>
+      <details>
+        <summary>服务器一定要买吗？免费托管够用吗？</summary>
+        <div class="acc-body">
+          <p>静态站点（博客、文档、落地页）完全可以零成本：Cloudflare Pages、Vercel、GitHub Pages 都提供免费托管 + 免费 HTTPS，还自带全球 CDN。</p>
+          <p>但只要有服务端逻辑、数据库、定时任务，就需要一台真正的服务器。入门级云服务器每月几十元，或者用云平台免费额度起步。<b>建议早期就买一台最便宜的服务器动手练</b>，因为部署和运维的坑只能真机踩出来。</p>
+        </div>
+      </details>
+      <details>
+        <summary>Docker 是必须的吗？</summary>
+        <div class="acc-body">
+          <p>不是必须，但强烈建议。它解决三个具体问题：环境一致性（本地和生产一致）、依赖隔离（不同项目不同版本互不干扰）、部署原子性（一条命令完成发布与回滚）。</p>
+          <p>如果只是跑一个简单的 Node 应用，用 <code>systemd</code> 或 <code>PM2</code> 也完全可行。等你有两个以上服务时再上 Docker Compose。</p>
+        </div>
+      </details>
+      <details>
+        <summary>网站被攻击了怎么办？</summary>
+        <div class="acc-body">
+          <p>按这个顺序处理：<b>先止损</b>（切流量、加防火墙规则、必要时下线）→ <b>保留现场</b>（导出日志和快照，不要急着删）→ <b>定位来源</b>（是 SQL 注入、弱密码、依赖漏洞还是配置错误）→ <b>修补并加固</b> → <b>复盘</b>写进 checklist。</p>
+          <p>日常预防见<a href="pages/ops.html#security">运维思路 · 安全加固</a>章节。</p>
+        </div>
+      </details>
+      <details>
+        <summary>多久能独立上线一个项目？</summary>
+        <div class="acc-body">
+          <p>每天投入 2～3 小时，大约 <b>3～4 个月</b>可以独立完成一个带用户系统、数据库和后台管理的中小型项目并部署上线。全职投入大约 6～8 周。</p>
+          <p>关键变量不是学习时长，而是<b>是否真的动手做了完整项目</b>。只看教程不动手，一年也上不了线。</p>
+        </div>
+      </details>
+    </div>
+
+    <div class="pager">
+      <a class="prev" href="pages/frontend.html"><span>下一步</span><b>前端基础 →</b></a>
+      <a class="next" href="pages/languages.html"><span>或直接进入</span><b>后端语言选型 →</b></a>
+    </div>
+  </main>
+
+  <aside class="toc" aria-label="本页目录"></aside>
+</div>
+
+<div class="mask"></div>
+
+<footer class="footer">
+  <div class="footer__grid">
+    <div>
+      <h5>原理篇</h5>
+      <ul>
+        <li><a href="pages/concepts.html">原理与概念</a></li>
+        <li><a href="pages/glossary.html">专业术语词典</a></li>
+        <li><a href="pages/concepts.html#cap">CAP 与一致性</a></li>
+      </ul>
+    </div>
+    <div>
+      <h5>基础篇</h5>
+      <ul>
+        <li><a href="pages/frontend.html">前端基础</a></li>
+        <li><a href="pages/languages.html">后端语言选型</a></li>
+      </ul>
+    </div>
+    <div>
+      <h5>工程篇</h5>
+      <ul>
+        <li><a href="pages/architecture.html">搭建思路</a></li>
+        <li><a href="pages/deployment.html">部署思路</a></li>
+        <li><a href="pages/ops.html">运维思路</a></li>
+      </ul>
+    </div>
+    <div>
+      <h5>速查</h5>
+      <ul>
+        <li><a href="pages/glossary.html#g-network">网络术语</a></li>
+        <li><a href="pages/glossary.html#confusing">12 组易混概念</a></li>
+        <li><a href="index.html#stack">技术栈全景</a></li>
+        <li><a href="pages/ops.html#troubleshoot">故障排查 SOP</a></li>
+      </ul>
+    </div>
+    <div>
+      <h5>关于</h5>
+      <ul>
+        <li><a href="index.html#principles">六条核心原则</a></li>
+        <li><a href="index.html#faq">常见问题</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="footer__bottom">
+    <span>网站开发基础教程 · 纯静态站点，可离线阅读，可直接部署</span>
+    <span>共 7 个章节 · 180+ 术语解释 · 快捷键 <code>/</code> 搜索</span>
+  </div>
+</footer>
+
+<script src="assets/js/main.js"></script>
+</body>
+</html>

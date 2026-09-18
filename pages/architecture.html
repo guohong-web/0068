@@ -1,0 +1,946 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>搭建思路 · 网站开发基础教程</title>
+<meta name="description" content="网站搭建思路：分层架构、目录组织、数据库设计、RESTful API 规范、鉴权、缓存、单体与微服务取舍、Git 工作流。">
+<link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body data-root="../">
+<div id="progress"></div>
+
+<header class="topbar">
+  <button class="topbar__burger" type="button" aria-label="打开导航">☰</button>
+  <a class="brand" href="../index.html">
+    <span class="brand__logo">W</span>
+    <span>网站开发基础教程</span>
+    <span class="brand__sub">Web Dev Handbook</span>
+  </a>
+  <div class="topbar__spacer"></div>
+  <nav class="topbar__nav">
+    <a href="../index.html">首页</a>
+    <a href="concepts.html">原理</a>
+    <a href="frontend.html">前端</a>
+    <a href="languages.html">后端</a>
+    <a class="is-active" href="architecture.html">搭建</a>
+    <a href="deployment.html">部署</a>
+    <a href="ops.html">运维</a>
+  </nav>
+  <button class="icon-btn" id="themeBtn" type="button" aria-label="切换主题">☾</button>
+</header>
+
+<div class="layout">
+  <aside class="sidebar" aria-label="章节导航"></aside>
+
+  <main class="content">
+    <span class="eyebrow">③ 工程篇</span>
+    <h1>搭建思路</h1>
+    <p class="lede">
+      "能跑"和"能维护三年"之间隔着架构。这一篇讲的是：怎么把需求翻译成一张表结构、怎么把功能拆成一层层代码、
+      怎么定接口规范让前后端不吵架，以及<b>什么时候该简单、什么时候该复杂</b>。
+    </p>
+
+    <div class="callout callout--info">
+      <span class="callout__ico">🧠</span>
+      <div>
+        <strong>本篇的两个概念地基</strong>
+        <p>① <a href="concepts.html#abstraction">分层、抽象与耦合</a>：为什么需要分层、分层的代价是什么、什么算"低耦合高内聚"。不理解这一节，分层就只是机械照搬目录结构。<br>
+        ② <a href="concepts.html#cap">一致性、可用性与扩展性</a>：CAP 定理、最终一致性、无状态设计的价值。它决定了缓存与微服务的取舍逻辑。<br>
+        数据库相关名词（索引、事务、隔离级别、回表、N+1）见术语词典的<a href="glossary.html#g-db">数据库</a>分类，架构类名词见<a href="glossary.html#g-arch">架构</a>分类。</p>
+      </div>
+    </div>
+
+    <div class="callout callout--warn">
+      <span class="callout__ico">⚠️</span>
+      <div>
+        <strong>关于过度设计</strong>
+        <p>本页会讲到微服务、消息队列、多级缓存，但请记住：<b>一个能承载十万用户的中型系统的正确形态，往往是一个精心设计的单体应用加一台数据库</b>。
+        架构的价值在于匹配当前规模，而不是展示技术广度。看到每个方案时，先问"我现在真的需要吗"。</p>
+      </div>
+    </div>
+
+    <h2 id="think">一、动手前先回答三个问题</h2>
+    <p>不写一行代码，先用一张纸回答这三问。它们决定了后面所有技术决策。</p>
+    <ol class="steps">
+      <li>
+        <h4>数据长什么样？</h4>
+        <p>列出所有实体（用户、订单、商品…）、每个实体的字段和类型、以及实体之间的关系（一对一/一对多/多对多）。这就是未来的表结构雏形。</p>
+      </li>
+      <li>
+        <h4>数据怎么流动？</h4>
+        <p>画出关键流程：用户点击下单 → 校验库存 → 创建订单 → 扣减库存 → 发起支付 → 回调更新状态。<b>流程里每一步失败会发生什么</b>，就是事务和补偿逻辑的边界。</p>
+      </li>
+      <li>
+        <h4>谁可以做什么？</h4>
+        <p>列出角色（游客、普通用户、管理员、运营）和每个角色能访问的操作。这是权限模型和接口鉴权的依据。</p>
+      </li>
+    </ol>
+
+    <div class="callout callout--tip">
+      <span class="callout__ico">📝</span>
+      <div>
+        <strong>极其实用的建议</strong>
+        <p>把这三问的答案写成项目根目录下的 <code>docs/design.md</code>。三个月后接手代码的人（很可能是未来的你）会感谢这份文档。</p>
+      </div>
+    </div>
+
+    <h2 id="layers">二、分层架构：把职责切开</h2>
+    <p>
+      不管用什么语言，一个可维护的后端基本都长成这样。分层不是形式主义，而是为了让"改一处"不会牵动全身。
+    </p>
+
+    <div class="flow">
+      <span class="on">HTTP 请求</span><i>→</i>
+      <span>路由 Router</span><i>→</i>
+      <span>中间件</span><i>→</i>
+      <span>控制器 Controller</span><i>→</i>
+      <span>服务 Service</span><i>→</i>
+      <span>数据访问 Repository</span><i>→</i>
+      <span>数据库</span>
+    </div>
+
+    <div class="table-wrap">
+      <table class="table-key">
+        <thead><tr><th>层</th><th>只负责</th><th>不应该做</th></tr></thead>
+        <tbody>
+          <tr><td>路由 / 中间件</td><td>URL 映射、鉴权、日志、限流、CORS</td><td>不写业务逻辑</td></tr>
+          <tr><td>控制器 Controller</td><td>解析参数、调用 Service、组装响应</td><td>不直接写 SQL，不做复杂计算</td></tr>
+          <tr><td>服务 Service</td><td>业务规则、事务边界、编排多个数据源</td><td>不感知 HTTP（不接收 req/res 对象）</td></tr>
+          <tr><td>数据访问 Repository</td><td>SQL / ORM 查询，返回模型对象</td><td>不做业务判断</td></tr>
+          <tr><td>模型 / DTO</td><td>数据结构定义与校验</td><td>不包含数据库连接逻辑</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="code">
+      <div class="code__head"><span class="code__dots"><i></i><i></i><i></i></span><span class="code__lang">JavaScript · 一次"创建订单"的分层走法</span></div>
+      <pre><code>// ---------- routes/order.routes.js：只做路由与中间件绑定 ----------
+router.post('/orders', auth, validate(createOrderSchema), orderController.create);
+
+// ---------- controllers/order.controller.js：只做参数与响应 ----------
+export async function create(req, res, next) {
+  try {
+    const order = await orderService.create({
+      userId: req.user.id,             // 来自鉴权中间件
+      items: req.body.items
+    });
+    res.status(201).json({ code: 0, data: order });
+  } catch (err) {
+    next(err);                          // 统一交给错误中间件
+  }
+}
+
+// ---------- services/order.service.js：业务逻辑 + 事务边界 ----------
+export async function create({ userId, items }) {
+  if (!items?.length) throw new BizError(40001, '订单不能为空');
+
+  // 事务：要么全部成功，要么全部回滚
+  return db.transaction(async (tx) =&gt; {
+    let total = 0;
+    for (const it of items) {
+      const goods = await goodsRepo.findById(it.goodsId, tx);
+      if (!goods) throw new BizError(40401, '商品不存在');
+      if (goods.stock &lt; it.qty) throw new BizError(40901, `库存不足：${goods.name}`);
+
+      await goodsRepo.decreaseStock(goods.id, it.qty, tx);   // 扣库存
+      total += goods.price * it.qty;
+    }
+    return orderRepo.insert({ userId, items, total, status: 'PENDING' }, tx);
+  });
+}
+
+// ---------- repositories/goods.repo.js：只碰数据库 ----------
+export function decreaseStock(id, qty, tx) {
+  // 用条件更新防超卖：影响行数为 0 说明被并发抢光了
+  return tx('goods')
+    .where({ id })
+    .where('stock', '&gt;=', qty)
+    .decrement('stock', qty);
+}</code></pre>
+    </div>
+
+    <div class="callout callout--danger">
+      <span class="callout__ico">🔥</span>
+      <div>
+        <strong>超卖的经典坑</strong>
+        <p>"先查库存再扣减"在并发下必然出错：两个请求同时查到库存 1，都判断通过，最后扣成 -1。
+        正确做法是<b>把判断条件写进更新语句</b>（如上面的 <code>where stock &gt;= qty</code>），或者用数据库行锁 <code>SELECT ... FOR UPDATE</code>，或者用乐观锁版本号。这类问题的通用名称叫<b>竞态条件</b>，是后端最容易出错的地方之一。</p>
+      </div>
+    </div>
+
+    <h2 id="structure">三、目录结构：让项目自己说话</h2>
+    <p>两种主流组织方式，按业务复杂度选择。</p>
+
+    <div class="grid-2">
+      <div class="panel">
+        <h4>按技术分层（小项目）</h4>
+        <p>文件少、找东西快。项目超过 ~30 个接口后，改一个功能要横跨五个目录。</p>
+      </div>
+      <div class="panel">
+        <h4>按业务模块（中大型）</h4>
+        <p>每个模块自包含，改动集中在同一目录，天然适合后续拆分微服务。</p>
+      </div>
+    </div>
+
+    <div class="tabs">
+      <div class="tabs__bar" role="tablist">
+        <button class="tab-btn is-active" role="tab" aria-selected="true" type="button">按技术分层</button>
+        <button class="tab-btn" role="tab" aria-selected="false" type="button">按业务模块</button>
+        <button class="tab-btn" role="tab" aria-selected="false" type="button">前后端分离全貌</button>
+      </div>
+
+      <div class="tab-panel is-active">
+        <div class="code">
+          <div class="code__head"><span class="code__lang">目录结构 · 分层式</span></div>
+          <pre><code>my-project/
+├─ src/
+│  ├─ config/          环境配置、常量（读取环境变量，不硬编码）
+│  ├─ routes/          路由定义
+│  ├─ controllers/     控制器
+│  ├─ services/        业务逻辑
+│  ├─ repositories/    数据访问
+│  ├─ middlewares/     鉴权、日志、限流、错误处理
+│  ├─ models/          数据模型与校验规则
+│  ├─ utils/           通用工具（时间、加密、分页）
+│  └─ app.js           应用装配（注册中间件与路由）
+├─ tests/              单元测试与接口测试
+├─ migrations/         数据库迁移脚本
+├─ scripts/            部署、初始化数据等脚本
+├─ docs/               设计文档、接口文档
+├─ .env.example        环境变量示例（真实 .env 不进 Git）
+├─ Dockerfile
+├─ docker-compose.yml
+└─ README.md           怎么装、怎么跑、怎么部署</code></pre>
+        </div>
+      </div>
+
+      <div class="tab-panel">
+        <div class="code">
+          <div class="code__head"><span class="code__lang">目录结构 · 模块化</span></div>
+          <pre><code>my-project/
+├─ src/
+│  ├─ modules/
+│  │  ├─ user/
+│  │  │  ├─ user.controller.js
+│  │  │  ├─ user.service.js
+│  │  │  ├─ user.repo.js
+│  │  │  ├─ user.schema.js      参数校验
+│  │  │  ├─ user.routes.js
+│  │  │  └─ user.test.js
+│  │  ├─ order/
+│  │  ├─ goods/
+│  │  └─ payment/
+│  ├─ shared/           跨模块共享：错误类、工具、中间件
+│  │  ├─ errors.js
+│  │  ├─ db.js
+│  │  └─ logger.js
+│  └─ app.js
+├─ migrations/
+└─ docs/</code></pre>
+        </div>
+        <p class="muted">改"订单"功能时只需打开 <code>modules/order/</code>，边界清晰，评审 diff 也更容易。</p>
+      </div>
+
+      <div class="tab-panel">
+        <div class="code">
+          <div class="code__head"><span class="code__lang">典型前后端分离项目（Monorepo）</span></div>
+          <pre><code>my-saas/
+├─ apps/
+│  ├─ web/                    前端
+│  │  ├─ src/
+│  │  │  ├─ api/              接口请求层（统一封装）
+│  │  │  ├─ components/       通用组件
+│  │  │  ├─ pages/            页面
+│  │  │  ├─ stores/           状态管理
+│  │  │  └─ router/
+│  │  └─ vite.config.js
+│  ├─ server/                 后端
+│  │  ├─ src/modules/...
+│  │  └─ Dockerfile
+│  └─ admin/                  后台管理（可选，独立前端）
+├─ packages/
+│  ├─ shared-types/           前后端共享的类型定义
+│  └─ utils/                  共享工具函数
+├─ deploy/
+│  ├─ docker-compose.yml
+│  ├─ nginx.conf
+│  └─ .github/workflows/ci.yml
+└─ docs/</code></pre>
+        </div>
+      </div>
+    </div>
+
+    <h2 id="database">四、数据库设计</h2>
+    <p>
+      数据库是项目里最难改的部分。字段加一个能接受，表结构改一次基本意味着停服。所以<b>设计阶段多花两小时，能省掉上线后两周的加班</b>。
+    </p>
+
+    <h3>建表规范</h3>
+    <ul class="checklist">
+      <li>每张表都有主键 <code>id</code>（自增或雪花 ID），不用业务字段当主键</li>
+      <li>每张表都有 <code>created_at</code> / <code>updated_at</code>，排查问题时是救命稻草</li>
+      <li>金额用 <code>DECIMAL(12,2)</code> 或<b>整数分</b>存储，绝不用 <code>FLOAT</code></li>
+      <li>时间统一存 UTC，展示时再转时区；或用 <code>TIMESTAMP WITH TIME ZONE</code></li>
+      <li>软删除用 <code>deleted_at</code> 字段而不是物理删除（保留可追溯性）</li>
+      <li>状态类字段用 <code>TINYINT</code> + 常量注释，不用中文或魔法字符串</li>
+      <li>外键约束视团队而定：强一致要求高就加，追求写入性能就用应用层保证</li>
+    </ul>
+
+    <div class="code">
+      <div class="code__head"><span class="code__dots"><i></i><i></i><i></i></span><span class="code__lang">SQL · 一个电商核心表设计</span></div>
+      <pre><code>-- 用户表
+CREATE TABLE `user` (
+  `id`          BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `email`       VARCHAR(120)    NOT NULL COMMENT '登录邮箱，唯一',
+  `password`    VARCHAR(100)    NOT NULL COMMENT 'bcrypt 哈希值，绝不存明文',
+  `nickname`    VARCHAR(50)     NOT NULL DEFAULT '',
+  `status`      TINYINT         NOT NULL DEFAULT 1 COMMENT '1正常 2禁用',
+  `created_at`  DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at`  DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `deleted_at`  DATETIME        NULL COMMENT '非空表示已软删除',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_email` (`email`),          -- 唯一索引：从数据库层防止重复注册
+  KEY `idx_created` (`created_at`)          -- 高频排序/筛选字段建索引
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- 订单表
+CREATE TABLE `order` (
+  `id`         BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `order_no`   CHAR(20)        NOT NULL COMMENT '对外展示的订单号，避免暴露自增 id',
+  `user_id`    BIGINT UNSIGNED NOT NULL,
+  `amount`     DECIMAL(12,2)   NOT NULL COMMENT '订单总额',
+  `status`     TINYINT         NOT NULL DEFAULT 0 COMMENT '0待支付 1已支付 2已发货 3已完成 4已取消',
+  `paid_at`    DATETIME        NULL,
+  `created_at` DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_order_no` (`order_no`),
+  KEY `idx_user_status` (`user_id`, `status`)   -- 联合索引：查"某用户的待支付订单"
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- 订单明细表：订单与商品是多对多，必须拆中间表
+CREATE TABLE `order_item` (
+  `id`         BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `order_id`   BIGINT UNSIGNED NOT NULL,
+  `goods_id`   BIGINT UNSIGNED NOT NULL,
+  `qty`        INT             NOT NULL DEFAULT 1,
+  `price`      DECIMAL(10,2)   NOT NULL COMMENT '下单时快照价，商品改价不影响历史订单',
+  PRIMARY KEY (`id`),
+  KEY `idx_order` (`order_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;</code></pre>
+    </div>
+
+    <div class="callout callout--info">
+      <span class="callout__ico">💰</span>
+      <div>
+        <strong>为什么订单明细要存 price 快照</strong>
+        <p>如果订单明细只存 <code>goods_id</code>，商品调价后历史订单金额会跟着变 —— 这是财务事故。所有"交易发生时的属性"都必须快照进订单，包括价格、名称、规格。</p>
+      </div>
+    </div>
+
+    <h3>索引：只加该加的</h3>
+    <div class="table-wrap">
+      <table class="table-key">
+        <thead><tr><th>规则</th><th>说明</th></tr></thead>
+        <tbody>
+          <tr><td>WHERE / JOIN / ORDER BY 的字段</td><td>优先考虑建索引</td></tr>
+          <tr><td>联合索引最左前缀</td><td><code>(a, b, c)</code> 能命中 <code>a</code>、<code>a,b</code>、<code>a,b,c</code>，但命中不了 <code>b</code></td></tr>
+          <tr><td>区分度低的字段慎建</td><td>性别（只有两个值）建索引几乎无用</td></tr>
+          <tr><td>函数或运算会失效</td><td><code>WHERE DATE(created_at) = '2026-01-01'</code> 无法用索引，要写范围查询</td></tr>
+          <tr><td>索引有写入成本</td><td>每多一个索引，插入和更新都变慢，也会占磁盘</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="code">
+      <div class="code__head"><span class="code__dots"><i></i><i></i><i></i></span><span class="code__lang">SQL · 上生产前必做：慢查询排查</span></div>
+      <pre><code>-- 开启慢查询日志，超过 0.5 秒的语句都记录下来
+SET GLOBAL slow_query_log = ON;
+SET GLOBAL long_query_time = 0.5;
+SET GLOBAL slow_query_log_file = '/var/log/mysql/slow.log';
+
+-- 分析单条语句到底走没走索引（重点看 type 和 Extra）
+EXPLAIN ANALYZE
+SELECT o.id, o.amount FROM `order` o
+WHERE o.user_id = 1024 AND o.status = 0
+ORDER BY o.created_at DESC LIMIT 20;
+-- 期望：type=ref，key=idx_user_status，Extra 不含 Using filesort
+-- 危险信号：type=ALL（全表扫描）、Extra 含 Using temporary / Using filesort
+
+-- 查看当前谁在跑长事务（排查锁等待）
+SELECT id, user, time, state, LEFT(info, 80) AS sql_text
+FROM information_schema.processlist
+WHERE command != 'Sleep' ORDER BY time DESC;</code></pre>
+    </div>
+
+    <h3>数据库迁移（Migration）</h3>
+    <p>
+      不要手工在客户端改表 —— 你会忘记在生产上执行，或者在测试环境改错。
+      用迁移文件把每次结构变更写进版本控制。
+    </p>
+    <div class="code">
+      <div class="code__head"><span class="code__dots"><i></i><i></i><i></i></span><span class="code__lang">Bash · 迁移工作流</span></div>
+      <pre><code># Node.js 生态：Knex / Prisma / Sequelize
+npx knex migrate:make add_phone_to_user    # 生成迁移文件
+npx knex migrate:latest                    # 执行未运行的迁移
+npx knex migrate:rollback                  # 回滚最近一次
+
+# Python：Alembic（配 SQLAlchemy）
+alembic revision --autogenerate -m "add phone to user"
+alembic upgrade head
+alembic downgrade -1
+
+# Java：Flyway（放 db/migration/V1__init.sql、V2__add_phone.sql）
+./mvnw flyway:migrate
+
+# 铁律：迁移文件只增不改；上线前先在预发环境跑一遍；
+#       破坏性变更（删列/改类型）必须分两次发布（先加新列，双写，再删旧列）</code></pre>
+    </div>
+
+    <h2 id="api">五、API 设计规范</h2>
+    <p>接口是前后端的契约。规范定的不是美观，而是<b>当出错时，双方都不需要猜</b>。</p>
+
+    <h3>URL 与方法</h3>
+    <div class="table-wrap">
+      <table class="table-key">
+        <thead><tr><th>操作</th><th>方法 + 路径</th><th>成功状态码</th></tr></thead>
+        <tbody>
+          <tr><td>查询列表</td><td><code>GET /api/v1/orders?page=1&amp;size=20&amp;status=0</code></td><td>200</td></tr>
+          <tr><td>查询详情</td><td><code>GET /api/v1/orders/123</code></td><td>200</td></tr>
+          <tr><td>创建</td><td><code>POST /api/v1/orders</code></td><td>201 + <code>Location</code> 头</td></tr>
+          <tr><td>整体更新</td><td><code>PUT /api/v1/orders/123</code></td><td>200</td></tr>
+          <tr><td>局部更新</td><td><code>PATCH /api/v1/orders/123</code></td><td>200</td></tr>
+          <tr><td>删除</td><td><code>DELETE /api/v1/orders/123</code></td><td>204（无响应体）</td></tr>
+          <tr><td>子资源</td><td><code>GET /api/v1/orders/123/items</code></td><td>200</td></tr>
+          <tr><td>非 CRUD 动作</td><td><code>POST /api/v1/orders/123/cancel</code></td><td>200</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p class="muted">URL 用<b>名词复数</b>表示资源，动作交给 HTTP 方法。无法用 CRUD 表达的动作（取消、支付、发布）用子路径 + POST，比 <code>PATCH /orders/123 {status: 'cancel'}</code> 更清晰、更便于加权限控制和审计日志。</p>
+
+    <h3>状态码：不要全都返回 200</h3>
+    <div class="table-wrap">
+      <table class="table-key">
+        <thead><tr><th>码</th><th>含义</th><th>什么时候用</th></tr></thead>
+        <tbody>
+          <tr><td>200 / 201 / 204</td><td>成功</td><td>查询 / 创建 / 删除成功无返回体</td></tr>
+          <tr><td>400</td><td>请求参数错误</td><td>缺字段、格式不对、校验不过</td></tr>
+          <tr><td>401</td><td>未认证</td><td>没带 token 或 token 过期 → 前端跳登录</td></tr>
+          <tr><td>403</td><td>无权限</td><td>已登录但角色不够 → 前端提示无权限</td></tr>
+          <tr><td>404</td><td>资源不存在</td><td>ID 查不到数据</td></tr>
+          <tr><td>409</td><td>冲突</td><td>邮箱已注册、库存不足、版本冲突</td></tr>
+          <tr><td>422</td><td>语义错误</td><td>参数格式对但业务上不可接受</td></tr>
+          <tr><td>429</td><td>请求过于频繁</td><td>触发限流，响应带 <code>Retry-After</code></td></tr>
+          <tr><td>500</td><td>服务器内部错误</td><td>代码异常、数据库挂了 —— 必须记日志</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout callout--danger">
+      <span class="callout__ico">🚨</span>
+      <div>
+        <strong>把错误码用对，是排查效率的分水岭</strong>
+        <p>如果所有失败都返回 200 加 <code>{ success: false }</code>，那么监控系统无法区分"正常"和"大面积报错"，
+        报警也没法按状态码聚合。正确使用 4xx/5xx 能让 Nginx 日志一眼看出问题类型。</p>
+      </div>
+    </div>
+
+    <h3>统一响应结构</h3>
+    <div class="code">
+      <div class="code__head"><span class="code__dots"><i></i><i></i><i></i></span><span class="code__lang">JSON · 约定的两种形态</span></div>
+      <pre><code>// 成功
+{
+  "code": 0,
+  "message": "ok",
+  "data": {
+    "items": [ { "id": 1, "amount": "99.00", "status": 0 } ],
+    "page": { "current": 1, "size": 20, "total": 137 }
+  },
+  "requestId": "a1b2c3d4"        // 服务端生成的追踪 ID，用户报错时让他提供
+}
+
+// 失败
+{
+  "code": 40901,
+  "message": "库存不足：机械键盘",
+  "data": null,
+  "requestId": "a1b2c3d4"
+}
+
+// 参数校验失败（带上字段级错误，前端可精确提示）
+{
+  "code": 40001,
+  "message": "参数校验失败",
+  "errors": [
+    { "field": "email", "message": "邮箱格式不正确" },
+    { "field": "items", "message": "至少选择一个商品" }
+  ],
+  "requestId": "a1b2c3d4"
+}</code></pre>
+    </div>
+
+    <div class="callout callout--tip">
+      <span class="callout__ico">🔗</span>
+      <div>
+        <strong>requestId 是最好用的低成本设计</strong>
+        <p>在入口中间件生成一个唯一 ID，写进响应头、响应体和所有日志行。用户截图报错时，你只需在日志里搜这个 ID，就能拿到这条请求经过的所有环节。
+        <b>一个下午的工作量，节省以后的无数次排查时间。</b></p>
+      </div>
+    </div>
+
+    <h3>分页、排序与过滤</h3>
+    <div class="code">
+      <div class="code__head"><span class="code__lang">HTTP · 查询参数约定</span></div>
+      <pre><code>GET /api/v1/orders?page=2&size=20&sort=-created_at&status=0&keyword=键盘
+
+# page/size   : 页码分页，适合后台管理（要知道总页数）
+# cursor      : 游标分页，适合无限滚动（性能稳定，大偏移量不退化）
+GET /api/v1/feed?cursor=eyJpZCI6MTIzfQ&limit=20
+
+# sort 前缀 - 表示倒序，多字段用逗号分隔：sort=-status,created_at
+
+# 响应头里带上总数，避免再发一次请求
+X-Total-Count: 137</code></pre>
+    </div>
+
+    <p class="muted">深分页陷阱：<code>LIMIT 20 OFFSET 100000</code> 会让数据库扫描并丢弃十万行。数据量大时改用游标分页（<code>WHERE id &lt; lastId ORDER BY id DESC LIMIT 20</code>）。</p>
+
+    <h2 id="auth">六、鉴权与权限</h2>
+    <p>先分清两件事：<b>认证（Authentication）</b>解决"你是谁"，<b>授权（Authorization）</b>解决"你能做什么"。新手最常犯的错是只做了认证，忘了授权 —— 于是普通用户能访问管理接口。</p>
+
+    <div class="tabs">
+      <div class="tabs__bar" role="tablist">
+        <button class="tab-btn is-active" role="tab" aria-selected="true" type="button">Session 方案</button>
+        <button class="tab-btn" role="tab" aria-selected="false" type="button">JWT 方案</button>
+        <button class="tab-btn" role="tab" aria-selected="false" type="button">权限模型 RBAC</button>
+      </div>
+
+      <div class="tab-panel is-active">
+        <p>服务端保存会话状态，浏览器只存一个无意义的 sessionId。可以随时在服务端吊销，安全模型简单。</p>
+        <ul class="plain-list">
+          <li><span class="k">存储</span><span>Redis 或数据库；多实例部署时必须共享</span></li>
+          <li><span class="k">传输</span><span>Cookie（HttpOnly + Secure + SameSite=Lax）</span></li>
+          <li><span class="k">优点</span><span>可即时登出、可查看在线用户、不易被窃取后长期利用</span></li>
+          <li><span class="k">缺点</span><span>需要共享存储；跨域场景配置繁琐</span></li>
+          <li><span class="k">适用</span><span>传统 Web 应用、后台管理系统（同域）</span></li>
+        </ul>
+      </div>
+
+      <div class="tab-panel">
+        <p>服务端不存状态，所有信息放在客户端携带的签名令牌里。适合多端（App / 小程序 / 第三方）。</p>
+        <ul class="plain-list">
+          <li><span class="k">结构</span><span><code>header.payload.signature</code>，payload 只是 Base64，<b>不要放敏感信息</b></span></li>
+          <li><span class="k">传输</span><span><code>Authorization: Bearer &lt;token&gt;</code></span></li>
+          <li><span class="k">有效期</span><span>accessToken 短（15 分钟）+ refreshToken 长（7 天，存数据库可吊销）</span></li>
+          <li><span class="k">难点</span><span>无法主动失效；需维护黑名单或用短有效期应对</span></li>
+          <li><span class="k">适用</span><span>前后端分离、移动端、开放 API</span></li>
+        </ul>
+      </div>
+
+      <div class="tab-panel">
+        <p>RBAC = 用户 → 角色 → 权限。用户挂角色，角色挂权限码，接口声明所需权限码。</p>
+        <div class="code">
+          <div class="code__head"><span class="code__lang">JavaScript · 权限中间件</span></div>
+          <pre><code>// 权限码表：order:read / order:write / user:manage ...
+function requirePerm(...codes) {
+  return async (req, res, next) =&gt; {
+    const perms = await getPermsByUserId(req.user.id);   // 带缓存
+    const ok = codes.every(c =&gt; perms.includes(c));
+    if (!ok) return res.status(403).json({ code: 40301, message: '无权限' });
+    next();
+  };
+}
+
+router.get('/admin/orders', auth, requirePerm('order:read'), list);
+router.delete('/admin/orders/:id', auth, requirePerm('order:write'), remove);
+
+// 数据级权限（更细）：只能看自己的数据
+// 在 Service 层强制注入 user_id 条件，永远不要相信前端传来的 userId
+async function getOrder(id, currentUser) {
+  const order = await orderRepo.findById(id);
+  if (!order) throw new NotFoundError();
+  if (order.userId !== currentUser.id &amp;&amp; !currentUser.isAdmin) throw new ForbiddenError();
+  return order;
+}</code></pre>
+        </div>
+      </div>
+    </div>
+
+    <div class="callout callout--danger">
+      <span class="callout__ico">🔒</span>
+      <div>
+        <strong>IDOR 越权漏洞：最常见的低级致命错误</strong>
+        <p><code>GET /api/orders/123</code> 里如果只用 URL 参数查数据，攻击者把 123 改成 124 就能看到别人的订单。
+        <b>正确做法是每个涉及数据的查询都必须带上当前用户 ID 作为条件</b>，或者在服务层显式校验归属。这个漏洞在真实系统里极其常见。</p>
+      </div>
+    </div>
+
+    <h3>密码存储：只有一种正确做法</h3>
+    <div class="code">
+      <div class="code__head"><span class="code__dots"><i></i><i></i><i></i></span><span class="code__lang">JavaScript · 密码哈希</span></div>
+      <pre><code>import bcrypt from 'bcrypt';
+
+// 注册：哈希后存库（cost=12，约 250ms，故意慢以抵抗暴力破解）
+const hash = await bcrypt.hash(plainPassword, 12);
+await userRepo.insert({ email, password: hash });
+
+// 登录：用 compare 比对，不要自己算哈希再字符串比较
+const user = await userRepo.findByEmail(email);
+if (!user) return res.status(401).json({ code: 40101, message: '邮箱或密码错误' });
+const ok = await bcrypt.compare(plainPassword, user.password);
+if (!ok) return res.status(401).json({ code: 40101, message: '邮箱或密码错误' });
+// 注意：两种情况返回完全相同的错误信息，避免暴露"该邮箱是否已注册"
+
+// 禁止：MD5 / SHA1 / SHA256（太快，可被彩虹表与 GPU 爆破）
+// 禁止：可逆加密（AES）存密码 —— 密码只能单向哈希
+// 推荐算法：bcrypt / scrypt / argon2id</code></pre>
+    </div>
+
+    <h2 id="cache">七、缓存策略</h2>
+    <p>缓存是提升性能最有效的手段，也是引入 bug 最快的途径。核心矛盾永远是<b>一致性</b>：数据改了，缓存什么时候失效。</p>
+
+    <div class="table-wrap">
+      <table class="table-key">
+        <thead><tr><th>缓存位置</th><th>典型工具</th><th>适合缓存什么</th><th>失效策略</th></tr></thead>
+        <tbody>
+          <tr><td>浏览器</td><td>Cache-Control / ETag</td><td>静态资源、图片</td><td>文件名加 hash，永久缓存</td></tr>
+          <tr><td>CDN</td><td>Cloudflare / 云厂商 CDN</td><td>静态资源、公开接口</td><td>按路径刷新或版本号</td></tr>
+          <tr><td>应用内</td><td>进程内存 Map / LRU</td><td>配置项、字典表</td><td>定时刷新（多实例不一致风险）</td></tr>
+          <tr><td>分布式</td><td>Redis / Memcached</td><td>会话、热点数据、接口结果</td><td>TTL + 主动删除</td></tr>
+          <tr><td>数据库</td><td>MySQL Buffer Pool / 物化视图</td><td>高频查询结果</td><td>数据库自动管理</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="code">
+      <div class="code__head"><span class="code__dots"><i></i><i></i><i></i></span><span class="code__lang">JavaScript · Cache-Aside 标准写法（最常用）</span></div>
+      <pre><code>async function getGoodsDetail(id) {
+  const key = `goods:detail:${id}`;
+
+  // 1. 先查缓存
+  const cached = await redis.get(key);
+  if (cached) return JSON.parse(cached);
+
+  // 2. 缓存未命中，查数据库
+  const goods = await goodsRepo.findById(id);
+  if (!goods) {
+    // 防穿透：空结果也要缓存，且 TTL 短，避免反复打数据库
+    await redis.set(key, 'null', 'EX', 30);
+    return null;
+  }
+
+  // 3. 回填缓存，随机 TTL 防止雪崩（千万个 key 同时过期）
+  const ttl = 600 + Math.floor(Math.random() * 120);
+  await redis.set(key, JSON.stringify(goods), 'EX', ttl);
+  return goods;
+}
+
+// 更新数据时：先更新数据库，再删除缓存（不是更新缓存）
+async function updateGoods(id, patch) {
+  await goodsRepo.update(id, patch);
+  await redis.del(`goods:detail:${id}`);        // 删除，让下次读时重建
+}</code></pre>
+    </div>
+
+    <div class="grid-2">
+      <div class="panel">
+        <h4>缓存穿透</h4>
+        <p>查询根本不存在的数据，每次都绕过缓存打到数据库。对策：缓存空值、布隆过滤器、参数合法性校验。</p>
+      </div>
+      <div class="panel">
+        <h4>缓存击穿</h4>
+        <p>某个热点 key 过期瞬间，大量请求同时涌向数据库。对策：热点 key 永不过期 + 后台更新，或加互斥锁只放一个请求去重建。</p>
+      </div>
+      <div class="panel">
+        <h4>缓存雪崩</h4>
+        <p>大批 key 同一时刻失效，数据库瞬间被压垮。对策：TTL 加随机值、多级缓存、限流降级。</p>
+      </div>
+      <div class="panel">
+        <h4>一致性延迟</h4>
+        <p>更新数据库后删除缓存，理论上仍有极短不一致窗口。对金额等强一致场景，直接读库或用分布式锁，不要依赖缓存。</p>
+      </div>
+    </div>
+
+    <h2 id="scale">八、单体还是微服务</h2>
+    <p>这是最容易被过度讨论的问题。给一个明确的判断标准：</p>
+    <div class="callout callout--info">
+      <span class="callout__ico">📐</span>
+      <div>
+        <strong>决策原则</strong>
+        <p><b>团队人数 &lt; 10 人，或日活 &lt; 10 万 → 单体应用</b>。一个代码库、一次部署、一个数据库。<br>
+        当出现以下信号再考虑拆分：① 不同模块的伸缩需求差异巨大（图片处理 vs 订单查询）；② 发布互相阻塞，A 团队等 B 团队；③ 单个模块的故障拖垮全站。</p>
+      </div>
+    </div>
+
+    <div class="table-wrap">
+      <table class="table-key">
+        <thead><tr><th>维度</th><th>单体应用</th><th>微服务</th></tr></thead>
+        <tbody>
+          <tr><td>开发效率</td><td>高（无跨服务调试）</td><td>低（需服务发现、链路追踪）</td></tr>
+          <tr><td>部署复杂度</td><td>低（一个包）</td><td>高（N 个服务编排）</td></tr>
+          <tr><td>事务一致性</td><td>数据库事务直接搞定</td><td>需 Saga / TCC / 消息最终一致</td></tr>
+          <tr><td>故障隔离</td><td>差（一处崩溃全站挂）</td><td>好（单服务故障可降级）</td></tr>
+          <tr><td>技术异构</td><td>难</td><td>易（每个服务可选不同语言）</td></tr>
+          <tr><td>运维成本</td><td>1 套监控</td><td>N 套服务 + 网关 + 注册中心</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>务实的三步走路径</h3>
+    <ol class="steps">
+      <li><h4>阶段一：模块化单体</h4><p>一个应用，但代码严格按业务模块分目录，模块间只通过明确的内部接口调用。这是 90% 项目的正确终点。</p></li>
+      <li><h4>阶段二：抽出独立部署单元</h4><p>把资源消耗大或伸缩需求不同的部分（图片处理、定时任务、报表导出）拆成独立进程，其余保持单体。</p></li>
+      <li><h4>阶段三：真正的服务化</h4><p>引入网关、服务注册、配置中心、链路追踪。此时必须有专职团队维护基础设施，否则得不偿失。</p></li>
+    </ol>
+
+    <h2 id="engineering">九、工程规范</h2>
+
+    <h3>配置与密钥管理</h3>
+    <div class="code">
+      <div class="code__head"><span class="code__dots"><i></i><i></i><i></i></span><span class="code__lang">Bash · 环境变量约定</span></div>
+      <pre><code># .env.example —— 提交到 Git，只写键名和示例值，作为文档
+NODE_ENV=development
+PORT=3000
+DATABASE_URL=postgres://user:password@localhost:5432/mydb
+REDIS_URL=redis://localhost:6379
+JWT_SECRET=change-me-in-production
+
+# .env —— 真实值，写进 .gitignore，永不提交
+# .gitignore
+.env
+.env.local
+*.pem
+*.key
+
+# 启动时校验必需变量，缺失就立刻退出（别等到运行时才报错）
+# config/index.js
+const required = ['DATABASE_URL', 'JWT_SECRET', 'REDIS_URL'];
+const missing = required.filter(k =&gt; !process.env[k]);
+if (missing.length) {
+  console.error('缺少必需环境变量：' + missing.join(', '));
+  process.exit(1);
+}</code></pre>
+    </div>
+
+    <div class="callout callout--danger">
+      <span class="callout__ico">🔑</span>
+      <div>
+        <strong>密钥泄露是最高频的严重事故</strong>
+        <p>把密钥提交到 Git 后，即使删除文件，历史记录里依然存在，公开仓库会被爬虫秒抓。
+        一旦泄露：<b>第一时间在服务商后台轮换（重新生成）密钥</b>，而不是只删代码。清理历史需要 <code>git filter-repo</code> 重写全部提交，且已 fork 的仓库无法回收。</p>
+      </div>
+    </div>
+
+    <h3>Git 工作流</h3>
+    <div class="code">
+      <div class="code__head"><span class="code__dots"><i></i><i></i><i></i></span><span class="code__lang">Bash · 小团队的实用流程</span></div>
+      <pre><code># 主干保护：main 分支禁止直接推送，只能通过 PR 合并
+git switch -c feature/order-cancel     # 从 main 拉功能分支
+git add -p                             # 分块暂存，避免把调试代码一起提交
+git commit -m "feat(order): 支持取消未支付订单"
+
+git fetch origin && git rebase origin/main   # 保持线性历史，及早解决冲突
+git push -u origin feature/order-cancel      # 推送并开 PR
+
+# 提交信息用约定式提交（Conventional Commits），便于自动生成变更日志
+# feat:     新功能
+# fix:      修 bug
+# refactor: 重构（不改行为）
+# docs:     文档
+# chore:    构建/依赖等杂项
+# perf:     性能优化
+# test:     测试
+
+# 上线后打标签，方便回滚到已知良好版本
+git tag -a v1.2.0 -m "订单取消功能上线"
+git push origin v1.2.0</code></pre>
+    </div>
+
+    <h3>代码质量守门</h3>
+    <ul class="plain-list">
+      <li><span class="k">格式化</span><span>Prettier / gofmt / black —— 团队不必争论风格，交给工具</span></li>
+      <li><span class="k">静态检查</span><span>ESLint / golangci-lint / ruff / SpotBugs —— CI 里必须过</span></li>
+      <li><span class="k">提交前钩子</span><span>husky + lint-staged，只检查改动文件，秒级完成</span></li>
+      <li><span class="k">测试</span><span>Service 层单测 + 关键链路接口测试，覆盖率不必追求数字，要覆盖资金与权限逻辑</span></li>
+      <li><span class="k">评审</span><span>PR 至少一人 Review；用 PR 模板强制填写"改了什么 / 怎么验证 / 怎么回滚"</span></li>
+    </ul>
+
+    <h3>统一日志与错误处理</h3>
+    <div class="code">
+      <div class="code__head"><span class="code__dots"><i></i><i></i><i></i></span><span class="code__lang">JavaScript · 结构化日志 + 全局错误处理</span></div>
+      <pre><code>import pino from 'pino';
+const log = pino({ level: process.env.LOG_LEVEL || 'info' });
+
+// 结构化日志：输出 JSON，方便日志系统按字段检索聚合
+log.info({ requestId, userId, path: req.path, ms: 42 }, 'request done');
+log.error({ requestId, err: err.message, stack: err.stack }, 'order create failed');
+
+// 自定义业务错误类，携带可对外暴露的错误码与状态码
+export class BizError extends Error {
+  constructor(code, message, status = 400) {
+    super(message);
+    this.code = code;
+    this.status = status;
+  }
+}
+
+// 全局错误中间件：必须是最后一个注册的中间件
+app.use((err, req, res, next) =&gt; {
+  const status = err.status || 500;
+  log.error({ requestId: req.id, path: req.path, err: err.message, stack: err.stack },
+            status &gt;= 500 ? 'server error' : 'client error');
+
+  res.status(status).json({
+    code: err.code || 50000,
+    // 关键：5xx 不把内部错误细节返回给客户端，避免泄露表名、路径等信息
+    message: status &gt;= 500 ? '服务器繁忙，请稍后重试' : err.message,
+    requestId: req.id
+  });
+});
+
+// 进程级兜底：避免未捕获异常导致静默退出或状态不明
+process.on('unhandledRejection', (r) =&gt; log.fatal({ r }, 'unhandledRejection'));
+process.on('uncaughtException', (e) =&gt; {
+  log.fatal({ e }, 'uncaughtException');
+  process.exit(1);              // 交给容器编排重启，比带病运行安全
+});</code></pre>
+    </div>
+
+    <h2 id="antipattern">十、常见架构反模式</h2>
+    <div class="accordion">
+      <details open>
+        <summary>在循环里查数据库（N+1 查询）</summary>
+        <div class="acc-body">
+          <p>先查 100 个订单，再逐个查每个订单的用户名 —— 一共 101 次查询。正确做法是一次性把 userId 收集起来，用 <code>IN</code> 批量查询后内存里做映射。<b>接口从 3 秒优化到 50 毫秒，往往就靠改这一处。</b></p>
+        </div>
+      </details>
+      <details>
+        <summary>把业务逻辑写在控制器里</summary>
+        <div class="acc-body">
+          <p>控制器直接写 SQL 和业务判断，导致逻辑无法复用、无法测试、换个入口（如定时任务）就得复制一遍。业务逻辑必须在 Service 层。</p>
+        </div>
+      </details>
+      <details>
+        <summary>用 SELECT * 查询</summary>
+        <div class="acc-body">
+          <p>多余字段浪费网络与内存，且表结构变更时容易出错。明确列出需要的字段，尤其是含有大文本（TEXT/BLOB）的表。</p>
+        </div>
+      </details>
+      <details>
+        <summary>长事务</summary>
+        <div class="acc-body">
+          <p>事务里调用第三方接口、发邮件、处理图片 —— 事务持续几秒甚至几十秒，期间持有行锁，会迅速造成锁等待雪崩。<b>事务只包住数据库操作，外部调用放到事务提交之后</b>（可用消息队列或事件机制）。</p>
+        </div>
+      </details>
+      <details>
+        <summary>在数据库里存业务格式化数据</summary>
+        <div class="acc-body">
+          <p>把金额格式化成 "¥99.00" 存起来、把日期格式化成 "2026年9月18日" 存起来 —— 一旦要换展示格式或做计算就只能全表更新。数据库存原始值，格式化交给前端。</p>
+        </div>
+      </details>
+      <details>
+        <summary>过早抽象</summary>
+        <div class="acc-body">
+          <p>为了"以后可能复用"设计三层泛型工厂 + 抽象基类，结果只有一个实现。抽象应该从第二个重复出现时开始，而不是从第一个开始。</p>
+        </div>
+      </details>
+      <details>
+        <summary>没有健康检查接口</summary>
+        <div class="acc-body">
+          <p>容器编排、负载均衡、监控都需要一个能判断"服务是否可用"的端点。<code>GET /healthz</code> 应同时检查数据库和 Redis 连通性，返回 200 或 503。</p>
+        </div>
+      </details>
+    </div>
+
+    <div class="code">
+      <div class="code__head"><span class="code__dots"><i></i><i></i><i></i></span><span class="code__lang">JavaScript · 一个合格的健康检查</span></div>
+      <pre><code>app.get('/healthz', async (req, res) =&gt; {
+  const checks = {};
+  let healthy = true;
+
+  try {
+    await db.raw('SELECT 1');
+    checks.database = 'ok';
+  } catch (e) {
+    checks.database = 'fail: ' + e.message;
+    healthy = false;
+  }
+
+  try {
+    await redis.ping();
+    checks.redis = 'ok';
+  } catch (e) {
+    checks.redis = 'fail: ' + e.message;
+    healthy = false;
+  }
+
+  checks.uptime = Math.round(process.uptime()) + 's';
+  checks.version = process.env.APP_VERSION || 'dev';
+
+  res.status(healthy ? 200 : 503).json({ status: healthy ? 'ok' : 'degraded', checks });
+});</code></pre>
+    </div>
+
+    <div class="callout callout--tip">
+      <span class="callout__ico">🧭</span>
+      <div>
+        <strong>下一步</strong>
+        <p>架构定好了，代码也写完了 —— 怎么把它放到公网上让所有人访问？进入 <a href="deployment.html">部署思路</a>。</p>
+      </div>
+    </div>
+
+    <div class="pager">
+      <a class="prev" href="languages.html"><span>上一篇</span><b>← 后端语言选型</b></a>
+      <a class="next" href="deployment.html"><span>下一篇</span><b>部署思路 →</b></a>
+    </div>
+  </main>
+
+  <aside class="toc" aria-label="本页目录"></aside>
+</div>
+
+<div class="mask"></div>
+
+<footer class="footer">
+  <div class="footer__grid">
+    <div>
+      <h5>基础篇</h5>
+      <ul>
+        <li><a href="frontend.html">前端基础</a></li>
+        <li><a href="languages.html">后端语言选型</a></li>
+      </ul>
+    </div>
+    <div>
+      <h5>工程篇</h5>
+      <ul>
+        <li><a href="architecture.html">搭建思路</a></li>
+        <li><a href="deployment.html">部署思路</a></li>
+        <li><a href="ops.html">运维思路</a></li>
+      </ul>
+    </div>
+    <div>
+      <h5>本页速查</h5>
+      <ul>
+        <li><a href="#database">建表与索引</a></li>
+        <li><a href="#api">API 规范</a></li>
+        <li><a href="#antipattern">架构反模式</a></li>
+      </ul>
+    </div>
+    <div>
+      <h5>关于</h5>
+      <ul>
+        <li><a href="../index.html#principles">六条核心原则</a></li>
+        <li><a href="../index.html#faq">常见问题</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="footer__bottom">
+    <span>网站开发基础教程 · 搭建思路</span>
+    <span>快捷键 <code>/</code> 搜索章节</span>
+  </div>
+</footer>
+
+<script src="../assets/js/main.js"></script>
+</body>
+</html>

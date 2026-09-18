@@ -1,0 +1,906 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>运维思路 · 网站开发基础教程</title>
+<meta name="description" content="网站运维思路：监控告警、日志治理、备份恢复、安全加固、性能优化、容量规划与故障排查 SOP。">
+<link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body data-root="../">
+<div id="progress"></div>
+
+<header class="topbar">
+  <button class="topbar__burger" type="button" aria-label="打开导航">☰</button>
+  <a class="brand" href="../index.html">
+    <span class="brand__logo">W</span>
+    <span>网站开发基础教程</span>
+    <span class="brand__sub">Web Dev Handbook</span>
+  </a>
+  <div class="topbar__spacer"></div>
+  <nav class="topbar__nav">
+    <a href="../index.html">首页</a>
+    <a href="concepts.html">原理</a>
+    <a href="frontend.html">前端</a>
+    <a href="languages.html">后端</a>
+    <a href="architecture.html">搭建</a>
+    <a href="deployment.html">部署</a>
+    <a class="is-active" href="ops.html">运维</a>
+  </nav>
+  <button class="icon-btn" id="themeBtn" type="button" aria-label="切换主题">☾</button>
+</header>
+
+<div class="layout">
+  <aside class="sidebar" aria-label="章节导航"></aside>
+
+  <main class="content">
+    <span class="eyebrow">⑤ 工程篇</span>
+    <h1>运维思路</h1>
+    <p class="lede">
+      上线不是终点，而是起点。运维要回答三个问题：<b>系统现在健康吗</b>（监控）、<b>出过什么事</b>（日志）、
+      <b>坏了怎么救、怎么不再坏</b>（备份与复盘）。这一篇把运维拆成可执行的清单，而不是概念。
+    </p>
+
+    <div class="callout callout--info">
+      <span class="callout__ico">🧠</span>
+      <div>
+        <strong>运维背后的三个概念</strong>
+        <p>① <a href="concepts.html#cap">一致性与可用性</a>：为什么"部分可用"比"全部雪崩"好，以及可用性是用冗余买来的；<br>
+        ② <a href="concepts.html#concurrency">进程、线程与并发</a>：为什么"内存泄漏跑几天就崩"、为什么 CPU 密集型任务会拖垮整个服务；<br>
+        ③ 可观测性三支柱（指标 / 日志 / 链路追踪）—— 见术语词典的<a href="glossary.html#g-deploy">部署与运维</a>分类，安全类名词见<a href="glossary.html#g-security">安全</a>分类。</p>
+      </div>
+    </div>
+
+    <div class="callout callout--info">
+      <span class="callout__ico">🎯</span>
+      <div>
+        <strong>运维的目标：让故障更少、更早被发现、更快被恢复</strong>
+        <p>不要追求"永不故障"，那不存在。追求的是：故障平均间隔（MTBF）变长，平均恢复时间（MTTR）变短。
+        做好监控与备份，一个人也能维护几十个服务；没有这两样，三个人的团队也会天天救火。</p>
+      </div>
+    </div>
+
+    <h2 id="slo">一、先定义"健康"</h2>
+    <p>没有标准就无法判断异常。先给系统定几个简单的可用性目标。</p>
+
+    <div class="table-wrap">
+      <table class="table-key">
+        <thead><tr><th>可用性</th><th>每年允许不可用</th><th>每月允许不可用</th><th>适用场景</th></tr></thead>
+        <tbody>
+          <tr><td>99%（两个九）</td><td>约 3.65 天</td><td>约 7.2 小时</td><td>内部工具、个人项目</td></tr>
+          <tr><td>99.9%（三个九）</td><td>约 8.8 小时</td><td>约 43 分钟</td><td>一般商业站点</td></tr>
+          <tr><td>99.95%</td><td>约 4.4 小时</td><td>约 22 分钟</td><td>对业务有明显影响的系统</td></tr>
+          <tr><td>99.99%（四个九）</td><td>约 53 分钟</td><td>约 4.4 分钟</td><td>支付、交易核心链路</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>四个黄金指标</h3>
+    <div class="grid-2">
+      <div class="panel">
+        <h4>延迟 Latency</h4>
+        <p>看 P50 / P95 / P99，不要只看平均值。平均值正常但 P99 是 8 秒，说明有 1% 的用户体验极差。</p>
+      </div>
+      <div class="panel">
+        <h4>流量 Traffic</h4>
+        <p>QPS、日请求数、并发连接数。它是判断"容量是否够"和"是否被攻击"的基础。</p>
+      </div>
+      <div class="panel">
+        <h4>错误 Errors</h4>
+        <p>HTTP 5xx 比例、异常数量、业务失败率。5xx 是最重要的报警来源。</p>
+      </div>
+      <div class="panel">
+        <h4>饱和度 Saturation</h4>
+        <p>CPU、内存、磁盘使用率、连接池占用。接近上限时性能会急剧恶化。</p>
+      </div>
+    </div>
+
+    <h2 id="monitor">二、监控体系</h2>
+    <p>监控分三层，按这个顺序建设，投入产出比最高。</p>
+
+    <div class="table-wrap">
+      <table class="table-key">
+        <thead><tr><th>层次</th><th>监控什么</th><th>推荐工具</th><th>建设成本</th></tr></thead>
+        <tbody>
+          <tr><td>可用性（黑盒）</td><td>外网能否访问、证书是否快过期、响应是否变慢</td><td>Uptime Kuma、BetterStack</td><td>10 分钟</td></tr>
+          <tr><td>资源与指标（白盒）</td><td>CPU、内存、磁盘、网络、进程数、QPS</td><td>node_exporter + Prometheus + Grafana</td><td>半天</td></tr>
+          <tr><td>应用与错误</td><td>异常堆栈、慢接口、前端 JS 报错、核心业务成功率</td><td>Sentry、日志平台、APM</td><td>1 小时</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>第一步：外部可用性监控（必做）</h3>
+    <div class="code">
+      <div class="code__head"><span class="code__dots"><i></i><i></i><i></i></span><span class="code__lang">Bash · 部署 Uptime Kuma</span></div>
+      <pre><code># 5 分钟搭建一个漂亮的可用性监控面板
+docker run -d --restart=unless-stopped \
+  --name uptime-kuma \
+  -p 127.0.0.1:3001:3001 \
+  -v uptime-data:/app/data \
+  louislam/uptime-kuma:1
+
+# 用 Nginx 加一个子域名反向代理到 3001，加上访问认证
+# 然后添加监控项：
+#   1) HTTP(s) 探针 → https://example.com  每 60 秒，期望 200
+#   2) HTTP(s) 探针 → https://example.com/healthz  期望 200 且响应含 "ok"
+#   3) 关键字探针 → 页面必须包含 "登录" 字样（防白屏 / 502 页面）
+#   4) TCP 探针   → 服务器 22 端口（发现机器失联）
+#   5) 证书过期提醒 → 提前 14 / 7 / 3 天
+# 通知渠道：邮件、企业微信、飞书、Telegram 机器人</code></pre>
+    </div>
+
+    <div class="callout callout--tip">
+      <span class="callout__ico">🔔</span>
+      <div>
+        <strong>一定要从公司/家以外的网络探测</strong>
+        <p>在服务器本机监控自己毫无意义 —— 机器失联时监控也一起挂了。
+        Uptime Kuma 可以部署在另一台机器或直接用托管服务，由它来探测你的主站。</p>
+      </div>
+    </div>
+
+    <h3>第二步：系统资源监控</h3>
+    <div class="code">
+      <div class="code__head"><span class="code__dots"><i></i><i></i><i></i></span><span class="code__lang">YAML · Prometheus + node_exporter + Grafana</span></div>
+      <pre><code>services:
+  node-exporter:
+    image: prom/node-exporter:latest
+    restart: unless-stopped
+    pid: host                       # 采集宿主机指标
+    volumes: ["/:/host:ro,rslave"]
+    command: ["--path.rootfs=/host"]
+    network_mode: host
+
+  prometheus:
+    image: prom/prometheus:latest
+    restart: unless-stopped
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prom-data:/prometheus
+    ports: ["127.0.0.1:9090:9090"]
+
+  grafana:
+    image: grafana/grafana:latest
+    restart: unless-stopped
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD:?必须设置}
+    volumes: [grafana-data:/var/lib/grafana]
+    ports: ["127.0.0.1:3002:3000"]
+
+volumes: { prom-data: {}, grafana-data: {} }
+
+# prometheus.yml 中的抓取配置
+# scrape_configs:
+#   - job_name: 'node'
+#     static_configs:
+#       - targets: ['host.docker.internal:9100']
+#   - job_name: 'app'
+#     metrics_path: /metrics
+#     static_configs:
+#       - targets: ['app:3000']</code></pre>
+    </div>
+
+    <p class="muted">Grafana 直接导入官方仪表盘 <b>Node Exporter Full（ID 1860）</b>，无需手搓图表。重点关注：磁盘使用率、内存可用量、CPU iowait、网络流量。</p>
+
+    <h3>第三步：应用指标与错误上报</h3>
+    <div class="code">
+      <div class="code__head"><span class="code__dots"><i></i><i></i><i></i></span><span class="code__lang">JavaScript · 暴露 Prometheus 指标 + 接入 Sentry</span></div>
+      <pre><code>import client from 'prom-client';
+import * as Sentry from '@sentry/node';
+
+// ---------- Prometheus 指标 ----------
+client.collectDefaultMetrics({ prefix: 'app_' });   // CPU、内存、事件循环延迟
+
+const httpDuration = new client.Histogram({
+  name: 'http_request_duration_seconds',
+  help: 'HTTP 请求耗时',
+  labelNames: ['method', 'route', 'status'],
+  buckets: [0.05, 0.1, 0.3, 0.5, 1, 3, 5]
+});
+
+// 中间件：记录每个请求的耗时分布，用于算 P95 / P99
+app.use((req, res, next) =&gt; {
+  const end = httpDuration.startTimer();
+  res.on('finish', () =&gt; end({ method: req.method, route: req.route?.path || req.path, status: res.statusCode }));
+  next();
+});
+
+app.get('/metrics', async (req, res) =&gt; {     // 只在内网暴露
+  res.set('Content-Type', client.register.contentType);
+  res.end(await client.register.metrics());
+});
+
+// ---------- Sentry：错误聚合与堆栈还原 ----------
+Sentry.init({
+  dsn: process.env.SENTRY_DSN,
+  environment: process.env.NODE_ENV,
+  tracesSampleRate: 0.1,                  // 10% 采样，避免流量费用过高
+  release: process.env.APP_VERSION        // 关联到具体版本，便于判断是哪个版本引入的
+});
+
+Sentry.setupExpressErrorHandler(app);     // 放在所有路由之后</code></pre>
+    </div>
+
+    <div class="callout callout--info">
+      <span class="callout__ico">📊</span>
+      <div>
+        <strong>值得优先加的四个业务指标</strong>
+        <p>① 登录成功率；② 支付/下单成功率；③ 关键外部依赖（支付网关、短信）的调用成功率与耗时；
+        ④ 队列积压数量。<b>技术指标告诉你"服务活着"，业务指标告诉你"生意是否正常"</b> —— 很多时候服务全绿但业务已中断。</p>
+      </div>
+    </div>
+
+    <h2 id="logs">三、日志治理</h2>
+    <p>日志的价值在于<b>事后能查到</b>。散落在各容器 stdout 里的日志，在出事时等于没有。</p>
+
+    <h3>三条基本原则</h3>
+    <ul class="plain-list">
+      <li><span class="k">结构化</span><span>输出 JSON 而不是拼接字符串。这样能按 <code>userId</code>、<code>requestId</code>、<code>status</code> 检索聚合。</span></li>
+      <li><span class="k">分级</span><span>error 只记真正的异常；warn 记可恢复的异常；info 记关键业务动作；debug 默认关闭。</span></li>
+      <li><span class="k">必带上下文</span><span>每条日志都要有 requestId、userId、路径、耗时。否则排查时只能靠猜。</span></li>
+    </ul>
+
+    <div class="code">
+      <div class="code__head"><span class="code__dots"><i></i><i></i><i></i></span><span class="code__lang">JSON · 好日志与坏日志</span></div>
+      <pre><code>// ❌ 坏：无法检索，缺少上下文，信息在字符串里
+console.log('用户 ' + userId + ' 下单失败，错误：' + err.message);
+
+// ✅ 好：字段化，可聚合统计，可建立看板
+{
+  "level": "error",
+  "time": "2026-09-18T10:23:41.512Z",
+  "msg": "order.create.failed",
+  "requestId": "8f3a-2b1c-99ee",
+  "userId": 1024,
+  "orderNo": "SO202609180001",
+  "goodsId": 778,
+  "reason": "STOCK_NOT_ENOUGH",
+  "durationMs": 42,
+  "env": "production",
+  "release": "v1.4.2"
+}
+
+// 有了这个格式，你可以直接问：
+//   「最近一小时 STOCK_NOT_ENOUGH 出现了多少次？」→ 一行查询
+//   「用户 1024 报错时对应的 requestId 是什么？」→ 一行查询</code></pre>
+    </div>
+
+    <h3>日志轮转：不做会撑满磁盘</h3>
+    <div class="code">
+      <div class="code__head"><span class="code__dots"><i></i><i></i><i></i></span><span class="code__lang">Bash · 日志轮转配置</span></div>
+      <pre><code># Docker：在 compose 中限制（推荐，最省事）
+# logging:
+#   driver: json-file
+#   options: { max-size: "10m", max-file: "5" }   → 单服务最多占 50MB
+
+# Nginx：用 logrotate（/etc/logrotate.d/nginx 通常已存在）
+# /var/log/nginx/*.log {
+#   daily
+#   rotate 14
+#   compress
+#   delaycompress
+#   missingok
+#   notifempty
+#   sharedscripts
+#   postrotate
+#     [ -f /var/run/nginx.pid ] && kill -USR1 $(cat /var/run/nginx.pid)
+#   endscript
+# }
+
+# 应用自写日志目录（如 /var/log/myapp/*.log）
+# /var/log/myapp/*.log {
+#   daily
+#   rotate 7
+#   compress
+#   size 50M
+#   missingok
+#   notifempty
+#   copytruncate         # 应用不支持重新打开文件时用这个
+# }
+
+sudo logrotate -d /etc/logrotate.d/myapp     # 演练，不实际执行
+sudo logrotate -f /etc/logrotate.d/myapp     # 强制立即轮转一次（验证配置）</code></pre>
+    </div>
+
+    <h3>日志集中收集（规模变大后再做）</h3>
+    <div class="table-wrap">
+      <table class="table-key">
+        <thead><tr><th>方案</th><th>组成</th><th>资源占用</th><th>适用</th></tr></thead>
+        <tbody>
+          <tr><td>Loki + Promtail + Grafana</td><td>轻量日志聚合，与 Grafana 同界面</td><td>低（单机 200MB 内）</td><td>个人与中小团队首选</td></tr>
+          <tr><td>ELK / OpenSearch</td><td>Elasticsearch + Logstash + Kibana</td><td>高（至少 4G 内存）</td><td>日志量大、需要复杂分析</td></tr>
+          <tr><td>云日志服务</td><td>云厂商托管</td><td>按量计费</td><td>不想维护、预算充足</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="code">
+      <div class="code__head"><span class="code__dots"><i></i><i></i><i></i></span><span class="code__lang">YAML · Loki 极简部署（配 Grafana 查询）</span></div>
+      <pre><code>services:
+  loki:
+    image: grafana/loki:3.0.0
+    restart: unless-stopped
+    command: -config.file=/etc/loki/local-config.yaml
+    volumes: ["loki-data:/loki"]
+    ports: ["127.0.0.1:3100:3100"]
+
+  promtail:
+    image: grafana/promtail:3.0.0
+    restart: unless-stopped
+    volumes:
+      - /var/log:/var/log:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - ./promtail.yml:/etc/promtail/config.yml:ro
+    command: -config.file=/etc/promtail/config.yml
+    depends_on: [loki]
+
+volumes: { loki-data: {} }
+
+# 在 Grafana 里添加 Loki 数据源后即可用 LogQL 查询：
+#   {container="myapp"} |= "order.create.failed" | json | userId = 1024
+#   sum by (reason) (count_over_time({container="myapp"} | json | msg="order.create.failed" [1h]))</code></pre>
+    </div>
+
+    <h2 id="alert">四、告警：少而准</h2>
+    <p>告警最大的敌人是"狼来了"。报警太多会导致团队麻木，真正的事故被淹没在噪音里。</p>
+
+    <div class="table-wrap">
+      <table class="table-key">
+        <thead><tr><th>级别</th><th>触发条件</th><th>通知方式</th><th>响应要求</th></tr></thead>
+        <tbody>
+          <tr><td>P0 紧急</td><td>站点完全不可访问 / 数据库不可用</td><td>电话 + 群 + 短信</td><td>立即处理</td></tr>
+          <tr><td>P1 严重</td><td>5xx 比例 &gt; 5% 持续 5 分钟 / 磁盘 &gt; 90%</td><td>群消息 + 邮件</td><td>30 分钟内</td></tr>
+          <tr><td>P2 警告</td><td>响应 P95 翻倍 / 内存持续 &gt; 85%</td><td>群消息</td><td>当天处理</td></tr>
+          <tr><td>P3 提醒</td><td>证书 14 天内到期 / 备份任务失败</td><td>邮件或工单</td><td>本周处理</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <ul class="checklist">
+      <li>只对"需要人介入"的事件告警，可自动恢复的抖动不报警</li>
+      <li>必须设置<b>持续时间</b>（如 "持续 5 分钟"），避免瞬时毛刺触发</li>
+      <li>告警内容里写清<b>现象、影响面、以及第一条排查命令</b></li>
+      <li>同一问题合并通知，不要每 30 秒重复发一条</li>
+      <li>每月回看一次：哪些告警从未需要处理 → 直接删掉或降级</li>
+    </ul>
+
+    <div class="code">
+      <div class="code__head"><span class="code__dots"><i></i><i></i><i></i></span><span class="code__lang">YAML · Prometheus 告警规则示例</span></div>
+      <pre><code>groups:
+  - name: app-alerts
+    rules:
+      - alert: HighErrorRate
+        expr: |
+          sum(rate(http_requests_total{status=~"5.."}[5m]))
+          / sum(rate(http_requests_total[5m])) &gt; 0.05
+        for: 5m                      # 持续 5 分钟才触发，过滤瞬时抖动
+        labels: { severity: critical }
+        annotations:
+          summary: "5xx 比例超过 5%（当前 {{ $value | humanizePercentage }}）"
+          runbook: "1) 查看应用日志 grep ERROR 2) 检查数据库连接 3) 必要时回滚上一版本"
+
+      - alert: DiskAlmostFull
+        expr: (node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"}) &lt; 0.15
+        for: 10m
+        labels: { severity: warning }
+        annotations:
+          summary: "根分区剩余空间低于 15%，请检查日志与镜像占用"
+
+      - alert: HighMemoryUsage
+        expr: (1 - node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes) &gt; 0.9
+        for: 10m
+        labels: { severity: warning }
+
+      - alert: SSLCertExpiringSoon
+        expr: probe_ssl_earliest_cert_expiry - time() &lt; 86400 * 14
+        labels: { severity: warning }
+        annotations: { summary: "TLS 证书将在 14 天内过期" }</code></pre>
+    </div>
+
+    <h2 id="backup">五、备份与恢复</h2>
+    <p>这一节是全文最重要的部分。<b>没有验证过恢复的备份，等于没有备份</b> —— 这句话几乎每个吃过亏的人都说过。</p>
+
+    <h3>3-2-1 原则</h3>
+    <ul class="plain-list">
+      <li><span class="k">3 份数据</span><span>生产数据 + 至少 2 份备份</span></li>
+      <li><span class="k">2 种介质</span><span>例如服务器磁盘 + 对象存储 / 异地</span></li>
+      <li><span class="k">1 份异地</span><span>与生产不在同一台机器、同一机房、同一个云账号下</span></li>
+    </ul>
+
+    <div class="code">
+      <div class="code__head"><span class="code__dots"><i></i><i></i><i></i></span><span class="code__lang">Bash · 自动化备份脚本（PostgreSQL 示例）</span></div>
+      <pre><code>#!/usr/bin/env bash
+# /opt/scripts/backup-db.sh
+set -euo pipefail
+
+BACKUP_DIR=/opt/backups
+RETENTION_DAYS=14
+STAMP=$(date +%Y%m%d_%H%M%S)
+FILE="$BACKUP_DIR/mydb_$STAMP.sql.gz"
+LOG=/var/log/backup.log
+
+log() { echo "$(date '+%F %T') $*" | tee -a "$LOG"; }
+
+mkdir -p "$BACKUP_DIR"
+
+# 1. 导出（--clean 让恢复时能覆盖已有对象）
+log "开始导出 mydb"
+docker compose -f /opt/myapp/docker-compose.yml exec -T db \
+  pg_dump -U app -d mydb --clean --if-exists | gzip &gt; "$FILE"
+
+# 2. 校验：文件必须存在、非空、且能被 gzip 完整读取
+[ -s "$FILE" ] || { log "错误：备份文件为空"; exit 1; }
+gzip -t "$FILE" || { log "错误：备份文件损坏"; exit 1; }
+SIZE=$(du -h "$FILE" | cut -f1)
+log "导出成功，体积 $SIZE"
+
+# 3. 上传到异地对象存储（用 rclone / coscmd / aws s3）
+rclone copy "$FILE" remote:my-backups/db/ --quiet &amp;&amp; log "已上传异地"
+
+# 4. 清理本地过期备份
+find "$BACKUP_DIR" -name '*.sql.gz' -mtime +$RETENTION_DAYS -delete
+log "已清理 $RETENTION_DAYS 天前的本地备份"
+
+# 5. 简单告警：任何一步失败都会因 set -e 退出，由 cron 邮件或监控捕获
+
+# ---------- 安装到定时任务 ----------
+# sudo crontab -e
+# 每天 03:30 备份，日志追加
+# 30 3 * * * /opt/scripts/backup-db.sh &gt;&gt; /var/log/backup.log 2&gt;&amp;1
+# 每周日凌晨 4 点做一次恢复演练到临时库
+# 0 4 * * 0 /opt/scripts/verify-restore.sh &gt;&gt; /var/log/backup.log 2&gt;&amp;1</code></pre>
+    </div>
+
+    <div class="code">
+      <div class="code__head"><span class="code__dots"><i></i><i></i><i></i></span><span class="code__lang">Bash · 恢复演练：不演练的备份是不可信的</span></div>
+      <pre><code>#!/usr/bin/env bash
+# verify-restore.sh —— 把最新备份恢复到临时容器，验证数据可读
+set -euo pipefail
+
+LATEST=$(ls -t /opt/backups/*.sql.gz | head -1)
+echo "验证备份：$LATEST"
+
+# 起一个临时数据库（用不同端口，不影响生产）
+docker run -d --name restore-test -e POSTGRES_PASSWORD=test \
+  -p 127.0.0.1:55432:5432 postgres:16-alpine >/dev/null
+sleep 8   # 等待初始化完成（生产脚本应用 pg_isready 轮询替代 sleep）
+
+gunzip -c "$LATEST" | docker exec -i restore-test psql -U postgres -d postgres
+
+# 关键：查询几张核心表，确认数据真的在
+COUNT=$(docker exec restore-test psql -U postgres -tAc "SELECT count(*) FROM \\\"order\\\";")
+USERS=$(docker exec restore-test psql -U postgres -tAc "SELECT count(*) FROM \\\"user\\\";")
+echo "恢复后 订单数=$COUNT 用户数=$USERS"
+
+# 记录基线，用于对比生产数据量是否合理
+[ "$COUNT" -gt 0 ] || { echo "恢复结果为空，备份可能有问题！"; exit 1; }
+
+docker rm -f restore-test >/dev/null
+echo "✅ 备份验证通过"
+
+# ---------- 真实故障发生时的恢复步骤 ----------
+# 1) 立刻停止写入，避免新数据覆盖：docker compose stop app
+# 2) 备份当前（可能已损坏的）数据：先留证据，别急着删
+# 3) 用最近一次可信备份恢复：gunzip -c xxx.sql.gz | docker exec -i db psql -U app -d mydb
+# 4) 确认数据完整后，再启动应用
+# 5) 补录备份时间点之后产生的数据（如果业务允许）</code></pre>
+    </div>
+
+    <div class="callout callout--danger">
+      <span class="callout__ico">🆘</span>
+      <div>
+        <strong>最常见的三种"备份失效"</strong>
+        <p>① 备份脚本报错但没人看日志 → 加了监控告警吗？<br>
+        ② 备份文件在服务器上，服务器磁盘坏了或被人删库 → 必须在异地（对象存储其他区域/另一个账号）。<br>
+        ③ 备份存在但从没恢复过，恢复时才发现缺少权限或格式不对 → 每季度至少演练一次。</p>
+      </div>
+    </div>
+
+    <h2 id="security">六、安全加固</h2>
+    <p>服务器一旦暴露在公网，每天都会被扫描。以下是按优先级排列的加固清单。</p>
+
+    <h3>基础设施层</h3>
+    <ul class="checklist">
+      <li>SSH 只允许密钥登录，禁用 root 与密码登录；有条件改非标准端口</li>
+      <li>云安全组只放行 80 / 443 / SSH 端口，数据库与 Redis 绝不对公网开放</li>
+      <li>数据库强密码（16 位以上随机串），Redis 设置 <code>requirepass</code> 且绑定内网</li>
+      <li>安装 fail2ban，自动封禁反复失败的登录来源 IP</li>
+      <li>开启自动安全更新，内核与 OpenSSL 漏洞必须及时打补丁</li>
+      <li>所有服务用非 root 用户运行，容器加 <code>--read-only</code>、<code>no-new-privileges</code></li>
+      <li>定期轮换密钥与 Token，人员离职后立即回收</li>
+    </ul>
+
+    <h3>应用层：OWASP 高频风险与对策</h3>
+    <div class="table-wrap">
+      <table class="table-key">
+        <thead><tr><th>风险</th><th>典型症状</th><th>防御手段</th></tr></thead>
+        <tbody>
+          <tr><td>SQL 注入</td><td>URL 参数拼进 SQL，能被 <code>1' OR '1'='1</code> 绕过</td><td><b>参数化查询</b>；ORM 正常使用；禁止字符串拼接 SQL</td></tr>
+          <tr><td>XSS 跨站脚本</td><td>用户输入的 <code>&lt;script&gt;</code> 被存库并渲染执行</td><td>输出转义、框架默认转义、CSP 响应头、富文本白名单过滤</td></tr>
+          <tr><td>CSRF 跨站请求伪造</td><td>第三方站点诱导已登录用户发起请求</td><td>Cookie 设 <code>SameSite=Lax/Strict</code>、CSRF Token、校验 Origin</td></tr>
+          <tr><td>越权 IDOR</td><td>改 URL 里的 ID 就能看别人数据</td><td>每个数据查询都带当前用户条件，服务层显式校验归属</td></tr>
+          <tr><td>弱口令 / 撞库</td><td>后台被爆破进入</td><td>登录限流与锁定、强制复杂度、二次验证（2FA）</td></tr>
+          <tr><td>依赖漏洞</td><td>引入的库存在已知 CVE</td><td><code>npm audit</code> / <code>pip-audit</code> / Dependabot 自动升级 PR</td></tr>
+          <tr><td>SSRF</td><td>服务端被诱导请求内网地址获取元数据</td><td>URL 白名单、禁止内网网段、云元数据接口改为 IMDSv2</td></tr>
+          <tr><td>文件上传</td><td>上传 webshell 获取服务器权限</td><td>校验扩展名与 MIME、重命名、存储到对象存储、禁执行</td></tr>
+          <tr><td>敏感信息泄露</td><td>接口返回了 password 字段、报错暴露堆栈</td><td>响应字段白名单（DTO）、5xx 统一文案、生产关闭 debug</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="code">
+      <div class="code__head"><span class="code__dots"><i></i><i></i><i></i></span><span class="code__lang">JavaScript · 安全要点速查代码</span></div>
+      <pre><code>// ✅ SQL：参数化（驱动会做转义）
+await db.query('SELECT * FROM users WHERE email = $1', [email]);
+// ❌ 拼接：注入的入口
+await db.query(`SELECT * FROM users WHERE email = '${email}'`);
+
+// ✅ 输出：默认转义（Vue/React 的 {{ }} 与 {} 都是转义输出）
+// ❌ 危险：需要渲染 HTML 时，务必先过滤
+// el.innerHTML = userInput;                      // 不要这样做
+import DOMPurify from 'dompurify';
+el.innerHTML = DOMPurify.sanitize(userHtml);     // 只保留白名单标签
+
+// ✅ 响应字段白名单：防止 password / salt 泄露
+function toUserDTO(u) {
+  return { id: u.id, email: u.email, nickname: u.nickname, createdAt: u.createdAt };
+}
+
+// ✅ 关键操作加二次校验 + 审计日志
+async function changePassword(req, res) {
+  await ensurePassword(req.user.id, req.body.oldPassword);   // 校验原密码
+  await userRepo.updatePassword(req.user.id, await hash(req.body.newPassword));
+  await auditLog.write({ actor: req.user.id, action: 'PASSWORD_CHANGED', ip: req.ip, at: new Date() });
+  await redis.del('session:' + req.user.id);                // 其他设备强制下线
+  res.json({ code: 0 });
+}
+
+// ✅ 安全响应头（Nginx 或 helmet 中间件）
+// Content-Security-Policy: default-src 'self'; img-src 'self' data: https:;
+// Strict-Transport-Security: max-age=31536000; includeSubDomains
+// X-Content-Type-Options: nosniff
+// X-Frame-Options: SAMEORIGIN</code></pre>
+    </div>
+
+    <div class="code">
+      <div class="code__head"><span class="code__dots"><i></i><i></i><i></i></span><span class="code__lang">Bash · 定期做这些自检</span></div>
+      <pre><code># 依赖漏洞扫描
+npm audit --omit=dev
+pip-audit
+govulncheck ./...
+mvn org.owasp:dependency-check-maven:check
+
+# 磁盘与镜像清理（常见的"磁盘莫名满了"原因）
+docker system df
+docker image prune -a -f
+journalctl --disk-usage && journalctl --vacuum-size=200M
+
+# 检查对外暴露的端口（应只有 22/80/443）
+sudo ss -tulpn
+
+# 查看登录失败情况与入侵痕迹
+sudo grep "Failed password" /var/log/auth.log | tail -20
+sudo lastb | head -20
+sudo crontab -l && sudo ls -la /etc/cron.*        # 挖矿脚本常藏在这里
+sudo find / -name "*.sh" -newermt "-7 days" -path "/tmp/*" 2&gt;/dev/null
+
+# 检查 Nginx 访问日志里的可疑请求
+sudo awk '{print $1}' /var/log/nginx/access.log | sort | uniq -c | sort -rn | head -20
+grep -Ei "(union|select|\.\./|etc/passwd|wp-admin|\.env)" /var/log/nginx/access.log | tail -20</code></pre>
+    </div>
+
+    <h2 id="perf">七、性能优化</h2>
+    <p>优化必须<b>基于测量</b>，否则就是瞎猜。顺序永远是：先测量 → 找瓶颈 → 改一处 → 再测量。</p>
+
+    <h3>按性价比排序的优化清单</h3>
+    <ol class="steps">
+      <li>
+        <h4>加数据库索引（通常收益最大）</h4>
+        <p>先从慢查询日志里找出 Top 5 慢接口，用 <code>EXPLAIN</code> 看是否全表扫描。一个正确的联合索引能把 3 秒变成 30 毫秒。</p>
+      </li>
+      <li>
+        <h4>消除 N+1 查询</h4>
+        <p>循环里查数据库是性能杀手。改成批量查询 + 内存映射。用 ORM 时要主动检查生成的 SQL 条数。</p>
+      </li>
+      <li>
+        <h4>加缓存</h4>
+        <p>读多写少的数据（配置、字典、热门列表、用户信息）放 Redis。注意设 TTL 和更新时删除缓存。</p>
+      </li>
+      <li>
+        <h4>静态资源上 CDN</h4>
+        <p>图片、JS、CSS 交给 CDN，同时减小服务器带宽压力与首屏时间。这一步几乎零代码改动。</p>
+      </li>
+      <li>
+        <h4>优化 SQL 与返回体积</h4>
+        <p>不查不需要的列、分页限制上限（<code>Math.min(size, 100)</code>）、大字段单独接口按需加载。</p>
+      </li>
+      <li>
+        <h4>异步化耗时操作</h4>
+        <p>发邮件、生成报表、图片压缩、调外部接口 —— 丢进队列异步处理，接口立即返回，用户体验从 5 秒变 200 毫秒。</p>
+      </li>
+      <li>
+        <h4>最后才是扩容与换语言</h4>
+        <p>上面六步做完仍不够，再考虑加机器、读写分离、分库分表。绝大多数项目永远到不了这一步。</p>
+      </li>
+    </ol>
+
+    <div class="code">
+      <div class="code__head"><span class="code__dots"><i></i><i></i><i></i></span><span class="code__lang">Bash · 压测与定位瓶颈</span></div>
+      <pre><code># ---------- 压测：先用小流量验证，别一上来就打满 ----------
+# wrk：高性能压测工具
+wrk -t 4 -c 100 -d 30s --latency https://example.com/api/orders
+#   -t 线程数  -c 并发连接数  -d 持续时长
+# 关注：Requests/sec、Latency 分布（尤其 P99）、非 2xx 响应数
+
+# ab：简单够用
+ab -n 5000 -c 50 https://example.com/api/healthz
+
+# 慢请求 Top 20（来自 Nginx 日志，rt 是请求耗时，需在 log_format 中定义）
+sudo awk '{match($0, /rt=([0-9.]+)/, a); if (a[1]+0 &gt; 1) print a[1], $7}' \
+  /var/log/nginx/access.log | sort -rn | head -20
+
+# ---------- 实时定位瓶颈 ----------
+htop                      # CPU / 内存 / 负载，看是哪个进程
+iostat -x 2               # 磁盘 %util 接近 100 说明是 IO 瓶颈
+vmstat 2 5                # 看 si/so（是否在换页）、wa（IO 等待）
+ss -s                     # 连接数统计，TIME_WAIT 过多需调内核参数
+docker stats              # 各容器资源占用，定位是哪个服务在吃资源
+
+# ---------- 看接口内部耗时 ----------
+# 在代码里打点日志（如上面的 durationMs），然后在日志平台统计
+#   sum by (route) (rate(http_request_duration_seconds_sum[5m]))
+#   / sum by (route) (rate(http_request_duration_seconds_count[5m]))
+# 就能得到每个路由的平均耗时排名</code></pre>
+    </div>
+
+    <div class="callout callout--warn">
+      <span class="callout__ico">🧪</span>
+      <div>
+        <strong>压测必须在测试环境，且要通知同事</strong>
+        <p>对生产环境直接压测可能拖垮数据库，甚至触发云厂商的 DDoS 防护把你自己封掉。
+        压测前确认：目标环境不是生产、有流量上限、有人在看着监控。</p>
+      </div>
+    </div>
+
+    <h2 id="capacity">八、容量与成本</h2>
+    <ul class="plain-list">
+      <li><span class="k">内存水位</span><span>常驻内存占物理内存 70% 以下为健康；超过 85% 就要扩容或排查泄漏</span></li>
+      <li><span class="k">磁盘水位</span><span>保持在 70% 以下。超过 90% 时数据库与日志系统都可能拒绝写入</span></li>
+      <li><span class="k">连接池</span><span>数据库连接池别设太大（常见 10～20），连接数超过数据库 <code>max_connections</code> 会直接拒绝新请求</span></li>
+      <li><span class="k">带宽</span><span>按峰值流量 × 1.5 留余量；大文件下载走对象存储 + CDN，不要吃服务器带宽</span></li>
+      <li><span class="k">成本控制</span><span>对象存储设生命周期规则（30 天后转低频）；关闭闲置实例；用预留实例/包年包月降低长期成本</span></li>
+    </ul>
+
+    <div class="code">
+      <div class="code__head"><span class="code__dots"><i></i><i></i><i></i></span><span class="code__lang">Bash · 磁盘空间去哪了</span></div>
+      <pre><code>df -h                                   # 先看哪个分区满
+du -xh --max-depth=1 / | sort -rh | head -15      # 逐层找大目录
+du -xh --max-depth=1 /var/lib/docker | sort -rh   # 容器相关
+
+# 常见元凶与处理
+journalctl --vacuum-size=200M           # systemd 日志
+docker system prune -a --volumes        # ⚠️ 确认没有未运行的数据库容器后再执行
+find /var/log -type f -size +500M -exec ls -lh {} \;   # 巨型日志文件
+
+# 定位"已删除但仍被占用"的文件（df 显示满但 du 找不到）
+lsof +L1 | sort -k7 -rn | head</code></pre>
+    </div>
+
+    <h2 id="troubleshoot">九、故障排查 SOP</h2>
+    <p>出故障时最怕慌乱。按下面这套固定流程走，能显著缩短恢复时间。</p>
+
+    <h3>通用四步法</h3>
+    <ol class="steps">
+      <li>
+        <h4>确认影响面</h4>
+        <p>是全站还是某个功能？所有用户还是部分用户？从什么时候开始？最近有变更吗？<b>先问"最后一次改动是什么"</b>，八成的故障来自最近一次发布。</p>
+      </li>
+      <li>
+        <h4>先止损，后定位</h4>
+        <p>能回滚就立刻回滚，能重启就重启，能切流量就切走。用户恢复访问优先于搞清楚原因。<b>但止损前尽量保留现场</b>（日志、<code>ps</code> 输出、快照）。</p>
+      </li>
+      <li>
+        <h4>逐层排除</h4>
+        <p>从外到内：域名解析 → 端口连通 → Nginx → 应用 → 数据库。每一层用一条命令验证，别跳步。</p>
+      </li>
+      <li>
+        <h4>复盘并加固</h4>
+        <p>恢复后 24 小时内写完复盘：根因、时间线、改进项（含负责人与截止时间）。没有复盘的故障一定会再来一次。</p>
+      </li>
+    </ol>
+
+    <h3>常见故障速查表</h3>
+    <div class="table-wrap">
+      <table class="table-key">
+        <thead><tr><th>现象</th><th>可能原因</th><th>第一条命令</th></tr></thead>
+        <tbody>
+          <tr><td>502 Bad Gateway</td><td>应用进程挂了 / 端口不对 / 启动中</td><td><code>docker compose ps</code> + <code>docker compose logs app</code></td></tr>
+          <tr><td>504 Gateway Timeout</td><td>接口太慢（慢查询、外部接口无超时）</td><td><code>curl -w '%{time_total}'</code> 看耗时，再查慢查询日志</td></tr>
+          <tr><td>全站打不开，ping 通</td><td>Nginx 挂了 / 证书过期 / 防火墙</td><td><code>nginx -t</code> + <code>openssl s_client</code> 看证书</td></tr>
+          <tr><td>域名解析不了</td><td>DNS 未生效 / 欠费 / 备案被撤</td><td><code>dig +short 域名 @8.8.8.8</code></td></tr>
+          <tr><td>响应越来越慢</td><td>内存泄漏 / 连接池耗尽 / 磁盘满</td><td><code>docker stats</code> + <code>df -h</code></td></tr>
+          <tr><td>进程莫名消失</td><td>被 OOM Killer 杀掉</td><td><code>dmesg | grep -i "killed process"</code>，然后排查内存上限</td></tr>
+          <tr><td>磁盘满导致写入失败</td><td>日志未轮转 / 镜像堆积</td><td><code>du -xh --max-depth=1 / | sort -rh | head</code></td></tr>
+          <tr><td>数据库连接数爆了</td><td>连接池配置过大 / 有泄漏</td><td>查 <code>processlist</code> 看谁在占连接</td></tr>
+          <tr><td>突然大量 404</td><td>SEO 爬虫扫旧链接 / 静态资源路径变了</td><td><code>grep " 404 " access.log | awk '{print $7}' | sort | uniq -c | sort -rn | head</code></td></tr>
+          <tr><td>CPU 100%</td><td>死循环 / 挖矿程序 / 正则回溯</td><td><code>top -H</code> 找到线程，<code>ss -tulpn</code> 检查可疑外连</td></tr>
+          <tr><td>出现不明进程与外连</td><td>被入侵</td><td>立即快照取证、断网、改所有密码、查 <code>crontab</code> 与 <code>/tmp</code></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="code">
+      <div class="code__head"><span class="code__dots"><i></i><i></i><i></i></span><span class="code__lang">Bash · 一条命令的逐层体检</span></div>
+      <pre><code># 按顺序执行，第一个失败的地方就是问题所在
+echo "1) DNS:"    && dig +short example.com
+echo "2) 端口:"   && nc -zv example.com 443
+echo "3) TLS:"    && echo | openssl s_client -connect example.com:443 -servername example.com 2&gt;&amp;1 | grep -E "Verify|expire"
+echo "4) 本机Nginx:" && curl -sI http://127.0.0.1/ | head -3
+echo "5) 应用直连:" && curl -s -o /dev/null -w '%{http_code} %{time_total}s\n' http://127.0.0.1:3000/healthz
+echo "6) 容器:"   && docker compose ps
+echo "7) 磁盘:"   && df -h / | tail -1
+echo "8) 内存:"   && free -h | head -2
+echo "9) 负载:"   && uptime
+echo "10) 5xx:"   && grep -c ' 5[0-9][0-9] ' /var/log/nginx/access.log 2&gt;/dev/null || echo 0</code></pre>
+    </div>
+
+    <h2 id="routine">十、例行维护清单</h2>
+
+    <div class="tabs">
+      <div class="tabs__bar" role="tablist">
+        <button class="tab-btn is-active" role="tab" aria-selected="true" type="button">每日</button>
+        <button class="tab-btn" role="tab" aria-selected="false" type="button">每周</button>
+        <button class="tab-btn" role="tab" aria-selected="false" type="button">每月</button>
+        <button class="tab-btn" role="tab" aria-selected="false" type="button">每季度</button>
+      </div>
+
+      <div class="tab-panel is-active">
+        <ul class="checklist">
+          <li>看监控面板与告警记录，确认没有未处理项</li>
+          <li>扫一眼错误日志与 5xx 数量趋势</li>
+          <li>确认数据库备份任务执行成功（看日志，不只看文件存在）</li>
+          <li>关注磁盘与内存水位</li>
+        </ul>
+      </div>
+
+      <div class="tab-panel">
+        <ul class="checklist">
+          <li>检查证书剩余有效期（或确认监控已覆盖）</li>
+          <li>升级依赖补丁版本，跑通测试后发布</li>
+          <li>清理无用镜像、日志、临时文件，回收磁盘</li>
+          <li>回看本周的 P95 延迟与错误率变化趋势</li>
+          <li>检查是否有长期未关闭的高权限账号或旧密钥</li>
+        </ul>
+      </div>
+
+      <div class="tab-panel">
+        <ul class="checklist">
+          <li>演练一次数据库恢复（恢复到临时库并校验数据）</li>
+          <li>做一次安全扫描（依赖漏洞、开放端口、SSH 登录失败统计）</li>
+          <li>评估容量：按当前增长，磁盘/内存/带宽还能撑多久</li>
+          <li>整理并删除无效告警规则</li>
+          <li>核对账单，关闭闲置资源</li>
+        </ul>
+      </div>
+
+      <div class="tab-panel">
+        <ul class="checklist">
+          <li>轮换密钥、Token、数据库密码（并确认换后服务正常）</li>
+          <li>演练一次完整的"服务器丢失"恢复流程（从零重建环境）</li>
+          <li>复盘本季度所有故障，检查改进项是否闭环</li>
+          <li>评审架构，判断是否到了需要拆分的规模</li>
+          <li>更新运维文档与值班手册</li>
+        </ul>
+      </div>
+    </div>
+
+    <h2 id="postmortem">十一、事故复盘模板</h2>
+    <p>复盘的目的不是追责，而是让同类事故不再发生。一份有效的复盘应当能在半年后被别人读懂。</p>
+
+    <div class="code">
+      <div class="code__head"><span class="code__dots"><i></i><i></i><i></i></span><span class="code__lang">Markdown · 复盘文档模板</span></div>
+      <pre><code># 事故复盘：订单接口 502 持续 23 分钟
+
+## 基本信息
+- 发生时间：2026-09-18 10:12 ~ 10:35（UTC+8）
+- 影响范围：全站下单功能不可用，约 430 名用户受影响
+- 严重级别：P1
+- 处理人：张三 / 李四
+
+## 时间线（精确到分钟）
+| 时间  | 事件 |
+|-------|------|
+| 10:12 | 监控告警：5xx 比例 12%，超过阈值 5% |
+| 10:15 | 确认下单接口全部 502，其他接口正常 |
+| 10:18 | 查看应用日志，发现数据库连接池耗尽 |
+| 10:22 | 定位：新发布的订单查询 SQL 缺少索引，全表扫描 |
+| 10:28 | 紧急回滚到上一个镜像版本 |
+| 10:33 | 服务恢复正常，5xx 归零 |
+| 10:35 | 告警恢复，确认数据无丢失 |
+
+## 根本原因
+本次发布新增的"按手机号查询历史订单"接口，未在 `order.user_phone` 上建索引，
+该字段有几百万行数据，单次查询耗时 4 秒以上。并发请求下连接池被迅速占满，
+导致同一进程内所有接口（共用连接池）全部超时。
+
+## 直接原因
+- SQL 变更未经过慢查询评审
+- 预发环境数据量只有几千行，未能暴露性能问题
+
+## 改进项（必须有负责人与截止时间）
+| 措施 | 负责人 | 截止 |
+|------|--------|------|
+| 补上 `order.user_phone` 索引并发布 | 张三 | 09-19 |
+| 预发环境导入生产脱敏数据（百万级） | 李四 | 09-30 |
+| CI 增加 EXPLAIN 检查：涉及新查询的 PR 必须附执行计划 | 张三 | 10-10 |
+| 连接池超时改为快速失败 + 熔断，避免拖垮全站 | 王五 | 10-15 |
+| 增加"下单成功率"业务指标告警 | 李四 | 09-25 |
+
+## 反思与结论
+本次事故的技术根因是缺少索引，但流程根因是"性能问题没有在发布前被发现"。
+仅补索引并不能防止下一次同类问题，因此必须落实预发数据量与执行计划评审。</code></pre>
+    </div>
+
+    <div class="callout callout--tip">
+      <span class="callout__ico">🎓</span>
+      <div>
+        <strong>你已经走完了整条路线</strong>
+        <p>前端基础 → 后端语言 → 搭建思路 → 部署思路 → 运维思路。
+        剩下的唯一事情就是：<b>选一个真正的项目，从写第一行代码开始，一直做到部署上线并稳定运行三个月</b>。
+        完成后回看这五章，你会发现每一节都变成了具体的经历，而不只是知识。</p>
+      </div>
+    </div>
+
+    <div class="pager">
+      <a class="prev" href="deployment.html"><span>上一篇</span><b>← 部署思路</b></a>
+      <a class="next" href="../index.html"><span>回到</span><b>教程首页 →</b></a>
+    </div>
+  </main>
+
+  <aside class="toc" aria-label="本页目录"></aside>
+</div>
+
+<div class="mask"></div>
+
+<footer class="footer">
+  <div class="footer__grid">
+    <div>
+      <h5>基础篇</h5>
+      <ul>
+        <li><a href="frontend.html">前端基础</a></li>
+        <li><a href="languages.html">后端语言选型</a></li>
+      </ul>
+    </div>
+    <div>
+      <h5>工程篇</h5>
+      <ul>
+        <li><a href="architecture.html">搭建思路</a></li>
+        <li><a href="deployment.html">部署思路</a></li>
+        <li><a href="ops.html">运维思路</a></li>
+      </ul>
+    </div>
+    <div>
+      <h5>本页速查</h5>
+      <ul>
+        <li><a href="#backup">备份与恢复脚本</a></li>
+        <li><a href="#security">安全加固清单</a></li>
+        <li><a href="#troubleshoot">故障排查 SOP</a></li>
+        <li><a href="#postmortem">复盘模板</a></li>
+      </ul>
+    </div>
+    <div>
+      <h5>关于</h5>
+      <ul>
+        <li><a href="../index.html#principles">六条核心原则</a></li>
+        <li><a href="../index.html#faq">常见问题</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="footer__bottom">
+    <span>网站开发基础教程 · 运维思路</span>
+    <span>快捷键 <code>/</code> 搜索章节</span>
+  </div>
+</footer>
+
+<script src="../assets/js/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>后端语言选型 · 网站开发基础教程</title>
+<meta name="description" content="八种主流后端语言（Node.js、Python、Java、Go、PHP、C#、Rust、Ruby）的特点、生态、最小示例与选型对比。">
+<link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body data-root="../">
+<div id="progress"></div>
+
+<header class="topbar">
+  <button class="topbar__burger" type="button" aria-label="打开导航">☰</button>
+  <a class="brand" href="../index.html">
+    <span class="brand__logo">W</span>
+    <span>网站开发基础教程</span>
+    <span class="brand__sub">Web Dev Handbook</span>
+  </a>
+  <div class="topbar__spacer"></div>
+  <nav class="topbar__nav">
+    <a href="../index.html">首页</a>
+    <a href="concepts.html">原理</a>
+    <a href="frontend.html">前端</a>
+    <a class="is-active" href="languages.html">后端</a>
+    <a href="architecture.html">搭建</a>
+    <a href="deployment.html">部署</a>
+    <a href="ops.html">运维</a>
+  </nav>
+  <button class="icon-btn" id="themeBtn" type="button" aria-label="切换主题">☾</button>
+</header>
+
+<div class="layout">
+  <aside class="sidebar" aria-label="章节导航"></aside>
+
+  <main class="content">
+    <span class="eyebrow">② 基础篇</span>
+    <h1>后端语言选型</h1>
+    <p class="lede">
+      后端语言的语法差异，大约两周就能抹平；真正的差异在于<b>生态、并发模型、部署形态和团队人力</b>。
+      这一篇不评选"最好的语言"，而是把八种主流选择放在同一张桌子上，让你能在半小时内做出对自己的项目来说正确的决定。
+    </p>
+
+    <div class="callout callout--info">
+      <span class="callout__ico">🧠</span>
+      <div>
+        <strong>先搞懂"语言的性质"，再谈选型</strong>
+        <p>选型的真正依据不是语法好不好看，而是<b>编译与运行方式、类型系统、并发模型、内存管理</b>这四件事的性质。它们分别决定了启动速度与部署形态、错误能在何时被发现、能扛多少并发、以及运行成本。
+        建议先读原理篇的<a href="concepts.html#concurrency">进程、线程与并发</a>，再看术语词典的<a href="glossary.html#g-lang">语言与运行时</a>分类，最后回到本页做选择。</p>
+      </div>
+    </div>
+
+    <div class="callout callout--info">
+      <span class="callout__ico">🎯</span>
+      <div>
+        <strong>先给结论</strong>
+        <p>零基础做第一个项目 → <b>Node.js（Express）</b> 或 <b>Python（FastAPI）</b>；<br>
+        找工作求稳妥 → <b>Java（Spring Boot）</b> 或 <b>Go</b>；<br>
+        已有 PHP/WordPress 站点要维护 → <b>PHP 继续用</b>；<br>
+        企业内网 / 微软系 → <b>C# + ASP.NET Core</b>；<br>
+        极致性能或系统级工具 → <b>Rust / Go</b>。<br>
+        <b>不要为了"性能好"在没做过项目时选 Rust。</b></p>
+      </div>
+    </div>
+
+    <h2 id="how">一、四个选型维度</h2>
+    <p>抛开语法偏好，只问自己四个问题，答案基本会自动浮现。</p>
+    <div class="table-wrap">
+      <table class="table-key">
+        <thead><tr><th>维度</th><th>要问的问题</th><th>为什么重要</th></tr></thead>
+        <tbody>
+          <tr><td>生态与文档</td><td>我要的功能有没有成熟的库？中文资料多吗？</td><td>决定你是在写业务还是在造轮子</td></tr>
+          <tr><td>部署与运维成本</td><td>能不能一条命令打包？镜像多大？内存占多少？</td><td>直接决定服务器成本与故障面</td></tr>
+          <tr><td>并发模型</td><td>我的场景是 IO 密集（查库、调接口）还是 CPU 密集（计算）？</td><td>IO 密集看异步/协程，CPU 密集看多核与线程</td></tr>
+          <tr><td>人与市场</td><td>团队现有成员会什么？当地招人容易吗？</td><td>语言再优雅，没人维护就是技术债</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>快速决策路径</h3>
+    <div class="flow">
+      <span>要快速出成果？</span><i>→</i>
+      <span class="on">Node.js / Python</span>
+    </div>
+    <div class="flow">
+      <span>要扛高并发、低内存？</span><i>→</i>
+      <span class="on">Go</span>
+    </div>
+    <div class="flow">
+      <span>进大厂 / 金融 / 中大型团队？</span><i>→</i>
+      <span class="on">Java</span>
+    </div>
+    <div class="flow">
+      <span>要极致性能、可预测的延迟？</span><i>→</i>
+      <span class="on">Rust</span>
+    </div>
+
+    <h2 id="compare">二、一张总表</h2>
+    <p>"上手难度"是主观评分（★ 越多越难），其余为客观特性。</p>
+    <div class="table-wrap">
+      <table class="table-key">
+        <thead>
+          <tr><th>语言</th><th>上手</th><th>并发模型</th><th>启动速度</th><th>内存占用</th><th>最强场景</th><th>典型框架</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>JavaScript / Node.js</td>
+            <td>★☆</td>
+            <td>事件循环 + 异步</td>
+            <td>快</td>
+            <td>中</td>
+            <td>API 网关、实时应用、全栈同语言</td>
+            <td>Express、NestJS、Fastify</td>
+          </tr>
+          <tr>
+            <td>TypeScript</td>
+            <td>★★</td>
+            <td>同 Node.js</td>
+            <td>快</td>
+            <td>中</td>
+            <td>中大型前端+后端统一类型</td>
+            <td>NestJS、tRPC、Hono</td>
+          </tr>
+          <tr>
+            <td>Python</td>
+            <td>★☆</td>
+            <td>协程 asyncio / 多进程</td>
+            <td>中</td>
+            <td>高</td>
+            <td>快速开发、数据处理、AI 集成</td>
+            <td>FastAPI、Django、Flask</td>
+          </tr>
+          <tr>
+            <td>Java</td>
+            <td>★★★</td>
+            <td>真线程池 + 虚拟线程</td>
+            <td>慢（JVM 预热）</td>
+            <td>高</td>
+            <td>大型企业系统、金融交易</td>
+            <td>Spring Boot、Quarkus</td>
+          </tr>
+          <tr>
+            <td>Go</td>
+            <td>★★</td>
+            <td>Goroutine + Channel</td>
+            <td>极快</td>
+            <td>低</td>
+            <td>高并发 API、云原生中间件、CLI</td>
+            <td>Gin、Echo、Fiber</td>
+          </tr>
+          <tr>
+            <td>PHP</td>
+            <td>★☆</td>
+            <td>进程/协程（Swoole、FrankenPHP）</td>
+            <td>极快</td>
+            <td>低</td>
+            <td>内容站、CMS、中小型业务系统</td>
+            <td>Laravel、Symfony、ThinkPHP</td>
+          </tr>
+          <tr>
+            <td>C# (.NET)</td>
+            <td>★★</td>
+            <td>async/await + 线程池</td>
+            <td>中（AOT 后可快）</td>
+            <td>中</td>
+            <td>企业应用、Windows 生态、游戏后端</td>
+            <td>ASP.NET Core、Blazor</td>
+          </tr>
+          <tr>
+            <td>Rust</td>
+            <td>★★★★</td>
+            <td>async + 无 GC 线程</td>
+            <td>极快</td>
+            <td>极低</td>
+            <td>极致性能服务、代理、WASM、基础设施</td>
+            <td>Axum、Actix Web、Rocket</td>
+          </tr>
+          <tr>
+            <td>Ruby</td>
+            <td>★☆</td>
+            <td>多进程 / 协程</td>
+            <td>慢</td>
+            <td>中</td>
+            <td>快速原型、创业公司 MVP</td>
+            <td>Ruby on Rails</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2 id="sample">三、同一个接口，八种写法</h2>
+    <p>
+      下面所有代码实现同一个功能：<b>启动 HTTP 服务，提供 <code>GET /hello?name=xxx</code>，返回 JSON</b>。
+      对比它们，你能直观感受到每种语言的设计哲学 —— 这比看任何介绍都快。
+    </p>
+
+    <div class="tabs">
+      <div class="tabs__bar" role="tablist">
+        <button class="tab-btn is-active" role="tab" aria-selected="true" type="button">Node.js</button>
+        <button class="tab-btn" role="tab" aria-selected="false" type="button">TypeScript</button>
+        <button class="tab-btn" role="tab" aria-selected="false" type="button">Python</button>
+        <button class="tab-btn" role="tab" aria-selected="false" type="button">Java</button>
+        <button class="tab-btn" role="tab" aria-selected="false" type="button">Go</button>
+        <button class="tab-btn" role="tab" aria-selected="false" type="button">PHP</button>
+        <button class="tab-btn" role="tab" aria-selected="false" type="button">C#</button>
+        <button class="tab-btn" role="tab" aria-selected="false" type="button">Rust</button>
+      </div>
+
+      <div class="tab-panel is-active">
+        <div class="code">
+          <div class="code__head"><span class="code__lang">Node.js + Express</span></div>
+          <pre><code>npm init -y
+npm i express
+
+// app.js
+import express from 'express';
+
+const app = express();
+app.use(express.json());
+
+app.get('/hello', (req, res) =&gt; {
+  const name = req.query.name || '世界';
+  res.json({ message: `你好，${name}`, ts: Date.now() });
+});
+
+app.listen(3000, () =&gt; console.log('http://localhost:3000/hello?name=张三'));</code></pre>
+        </div>
+        <p class="muted">特点：与前端同语言、生态最大、异步天然。适合 API、实时通信（WebSocket）、BFF 层。</p>
+      </div>
+
+      <div class="tab-panel">
+        <div class="code">
+          <div class="code__head"><span class="code__lang">TypeScript + NestJS</span></div>
+          <pre><code>npm i -g @nestjs/cli
+nest new my-api
+
+// src/app.controller.ts
+import { Controller, Get, Query } from '@nestjs/common';
+
+@Controller('hello')
+export class AppController {
+  @Get()
+  hello(@Query('name') name = '世界') {
+    return { message: `你好，${name}`, ts: Date.now() };
+  }
+}
+
+// 编译后运行：npm run build &amp;&amp; node dist/main.js
+// 优点：装饰器 + 依赖注入 + 类型安全，适合多人协作的中大型项目</code></pre>
+        </div>
+        <p class="muted">特点：给 JS 加上静态类型。项目超过几千行后，类型带来的收益远大于写类型注释的成本。</p>
+      </div>
+
+      <div class="tab-panel">
+        <div class="code">
+          <div class="code__head"><span class="code__lang">Python + FastAPI</span></div>
+          <pre><code>pip install fastapi uvicorn
+
+# main.py
+from fastapi import FastAPI
+from datetime import datetime
+
+app = FastAPI()
+
+@app.get("/hello")
+def hello(name: str = "世界"):
+    return {"message": f"你好，{name}", "ts": int(datetime.now().timestamp() * 1000)}
+
+# uvicorn main:app --reload --port 3000
+# 自动生成交互式文档：http://localhost:3000/docs</code></pre>
+        </div>
+        <p class="muted">特点：类型注解即校验即文档。数据处理、爬虫、AI 集成的首选，生态覆盖面极广。</p>
+      </div>
+
+      <div class="tab-panel">
+        <div class="code">
+          <div class="code__head"><span class="code__lang">Java + Spring Boot</span></div>
+          <pre><code>// 用 start.spring.io 生成项目，或 mvn archetype:generate
+// pom.xml 依赖：spring-boot-starter-web
+
+// HelloController.java
+package com.example.demo;
+
+import org.springframework.web.bind.annotation.*;
+import java.util.Map;
+
+@RestController
+public class HelloController {
+    @GetMapping("/hello")
+    public Map&lt;String, Object&gt; hello(@RequestParam(defaultValue = "世界") String name) {
+        return Map.of("message", "你好，" + name, "ts", System.currentTimeMillis());
+    }
+}
+
+// 启动：./mvnw spring-boot:run
+// 打包：./mvnw clean package → target/demo-0.0.1-SNAPSHOT.jar → java -jar</code></pre>
+        </div>
+        <p class="muted">特点：生态极其完备（安全、事务、消息、缓存全都有官方方案），企业级事实标准。代价是代码量和启动内存偏高。</p>
+      </div>
+
+      <div class="tab-panel">
+        <div class="code">
+          <div class="code__head"><span class="code__lang">Go + 标准库（零依赖）</span></div>
+          <pre><code>package main
+
+import (
+	"encoding/json"
+	"net/http"
+	"time"
+)
+
+func main() {
+	http.HandleFunc("/hello", func(w http.ResponseWriter, r *http.Request) {
+		name := r.URL.Query().Get("name")
+		if name == "" {
+			name = "世界"
+		}
+		w.Header().Set("Content-Type", "application/json; charset=utf-8")
+		json.NewEncoder(w).Encode(map[string]any{
+			"message": "你好，" + name,
+			"ts":      time.Now().UnixMilli(),
+		})
+	})
+	http.ListenAndServe(":3000", nil)   // go run main.go
+}</code></pre>
+        </div>
+        <p class="muted">特点：标准库自带 HTTP 服务，不装框架也能干活。编译成单个二进制文件，部署时 <code>scp</code> 上去就能跑，静态镜像只有几 MB。</p>
+      </div>
+
+      <div class="tab-panel">
+        <div class="code">
+          <div class="code__head"><span class="code__lang">PHP 8（内置服务器）</span></div>
+          <pre><code>// index.php
+&lt;?php
+$name = $_GET['name'] ?? '世界';
+header('Content-Type: application/json; charset=utf-8');
+echo json_encode([
+    'message' =&gt; "你好，{$name}",
+    'ts'      =&gt; (int) (microtime(true) * 1000),
+], JSON_UNESCAPED_UNICODE);
+
+// 运行：php -S 0.0.0.0:3000 index.php
+// 生产：用 php-fpm + Nginx 或 Laravel + Octane（Swoole 常驻内存）</code></pre>
+        </div>
+        <p class="muted">特点：共享主机即可运行，无需编译、无需额外运维。全球绝大多数 CMS 与中小站点跑在 PHP 上。</p>
+      </div>
+
+      <div class="tab-panel">
+        <div class="code">
+          <div class="code__head"><span class="code__lang">C# + ASP.NET Core（最小 API）</span></div>
+          <pre><code>dotnet new web -o HelloApi
+cd HelloApi
+
+// Program.cs
+var builder = WebApplication.CreateBuilder(args);
+var app = builder.Build();
+
+app.MapGet("/hello", (string? name) =&gt; new {
+    message = $"你好，{name ?? "世界"}",
+    ts = DateTimeOffset.Now.ToUnixTimeMilliseconds()
+});
+
+app.Run("http://0.0.0.0:3000");
+// 运行：dotnet run   发布：dotnet publish -c Release</code></pre>
+        </div>
+        <p class="muted">特点：性能在主流框架中长期靠前，类型系统与工具链（Visual Studio / Rider）极其成熟，跨平台已无历史包袱。</p>
+      </div>
+
+      <div class="tab-panel">
+        <div class="code">
+          <div class="code__head"><span class="code__lang">Rust + Axum</span></div>
+          <pre><code>// cargo new hello-api &amp;&amp; cd hello-api
+// Cargo.toml: axum = "0.7", tokio = { version = "1", features = ["full"] }, serde_json = "1"
+
+use axum::{routing::get, Router, Json, extract::Query};
+use serde::Deserialize;
+use std::collections::HashMap;
+
+#[derive(Deserialize)]
+struct Params { name: Option&lt;String&gt; }
+
+async fn hello(Query(p): Query&lt;Params&gt;) -&gt; Json&lt;serde_json::Value&gt; {
+    let name = p.name.unwrap_or_else(|| "世界".into());
+    Json(serde_json::json!({ "message": format!("你好，{}", name) }))
+}
+
+#[tokio::main]
+async fn main() {
+    let app = Router::new().route("/hello", get(hello));
+    let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
+    axum::serve(listener, app).await.unwrap();
+}</code></pre>
+        </div>
+        <p class="muted">特点：无 GC、零成本抽象，性能与内存效率顶级。代价是学习曲线陡峭（所有权与生命周期），开发速度明显慢于脚本语言。</p>
+      </div>
+    </div>
+
+    <div class="callout callout--tip">
+      <span class="callout__ico">🔍</span>
+      <div>
+        <strong>横向观察</strong>
+        <p>Go 和 Rust 的示例里没有出现"框架" —— 它们的标准库/生态把 HTTP 视为基础能力。<br>
+        而 Java 与 C# 的示例中，<b>注解/特性</b>是核心表达方式，框架深度绑定语言习惯。<br>
+        Node.js 与 Python 的示例最短，因为它们把"少写代码"当作首要目标。</p>
+      </div>
+    </div>
+
+    <h2 id="deep">四、逐个深入</h2>
+
+    <h3>JavaScript / Node.js：全栈同语言</h3>
+    <p>
+      最大优势是<b>一种语言写前后端</b>，类型（TypeScript）、工具链、校验逻辑（Zod）可以前后端复用。
+      单线程事件循环模型非常适合"等数据库、等第三方接口"的 IO 密集场景；不适合 CPU 密集任务（会阻塞整个进程，需要 worker_threads 或拆微服务）。
+    </p>
+    <ul class="plain-list">
+      <li><span class="k">并发模型</span><span>单线程 + 事件循环（libuv 线程池处理文件与 DNS）</span></li>
+      <li><span class="k">适合</span><span>REST / GraphQL API、WebSocket 实时应用、SSR 应用、BFF 聚合层</span></li>
+      <li><span class="k">注意</span><span>回调与 Promise 混用易出 bug；单进程崩溃会带走所有请求（需 PM2 / 多容器 + 优雅退出）</span></li>
+      <li><span class="k">部署</span><span>Docker 镜像约 120MB（node:20-alpine + 依赖），内存 100～300MB 起步</span></li>
+    </ul>
+
+    <h3>Python：把开发速度放在第一位</h3>
+    <p>
+      语法接近伪代码，读起来像文档。它的问题从来不是"慢"，而是<b>并发模型碎片化</b>：
+      多进程（multiprocessing）真正并行但吃内存，协程（asyncio）轻量但要求全链路异步，而 GIL 让多线程在 CPU 密集场景下收益有限。
+      "Python 慢"通常不是瓶颈 —— 瓶颈是数据库查询次数、N+1 问题和缺少索引。
+    </p>
+    <ul class="plain-list">
+      <li><span class="k">Web 框架</span><span>FastAPI（现代异步首选）、Django（自带 ORM + Admin，适合内容型业务）、Flask（极简）</span></li>
+      <li><span class="k">适合</span><span>数据平台、内部工具、AI/LLM 应用后端、需要快速验证的业务</span></li>
+      <li><span class="k">注意</span><span>部署要配 Gunicorn/Uvicorn worker 数与内存上限；虚拟环境必须隔离</span></li>
+      <li><span class="k">部署</span><span>镜像偏大（python:3.12-slim + 依赖约 250MB），内存 200～500MB</span></li>
+    </ul>
+
+    <h3>Java：企业级的稳定与规范</h3>
+    <p>
+      强类型、成熟的事务管理、完整的工程规范，以及最庞大的中间件生态（Spring Cloud 全家桶）。
+      代价是启动慢、内存高、代码样板多。近年的 GraalVM 原生镜像与虚拟线程（JDK 21+）正在显著改善这两点。
+    </p>
+    <ul class="plain-list">
+      <li><span class="k">适合</span><span>金融、政企、大型多团队协作系统、需要强事务一致性</span></li>
+      <li><span class="k">注意</span><span>必须调 JVM 参数（<code>-Xmx</code>），否则容器里容易被 OOM Kill；需关注 GC 日志</span></li>
+      <li><span class="k">部署</span><span>内存 512MB～2GB 起步，镜像 300MB+，容器化后需限制堆大小</span></li>
+    </ul>
+
+    <h3>Go：为服务端而生的语言</h3>
+    <p>
+      Goroutine 让写并发像写同步代码一样简单，编译成单个静态二进制、启动毫秒级、内存占用低。
+      它没有泛型"魔法"和继承，语言特性极少，因此团队代码风格高度统一 —— 这对长期维护是巨大优势。
+    </p>
+    <ul class="plain-list">
+      <li><span class="k">适合</span><span>高并发 API、网关/代理、容器与云原生工具、CLI、需要低延迟的服务</span></li>
+      <li><span class="k">注意</span><span>要显式处理 <code>error</code>，容易写出冗长的错误判断；goroutine 泄漏需靠 context 超时控制</span></li>
+      <li><span class="k">部署</span><span>镜像可做到 10MB 以内（scratch/alpine），内存 20～80MB</span></li>
+    </ul>
+
+    <div class="code">
+      <div class="code__head"><span class="code__dots"><i></i><i></i><i></i></span><span class="code__lang">Go · 极简部署：单文件二进制</span></div>
+      <pre><code># 本地交叉编译出 Linux 可执行文件
+CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o app
+
+# 上传到服务器后，用 systemd 守护（无需装任何运行时）
+scp app user@server:/opt/myapp/
+ssh user@server 'sudo systemctl restart myapp'
+
+# /etc/systemd/system/myapp.service
+[Unit]
+Description=MyApp
+After=network.target
+
+[Service]
+ExecStart=/opt/myapp/app
+Environment=PORT=8080
+Restart=always
+RestartSec=3
+User=www-data
+
+[Install]
+WantedBy=multi-user.target</code></pre>
+    </div>
+
+    <h3>PHP：被严重低估的"够用主义"</h3>
+    <p>
+      现代 PHP（8.x）有类型声明、JIT、完善的 Composer 生态和 Laravel 这样的全功能框架。
+      "PHP 性能差"是十年前的印象 —— 开启 OPcache 后，加上 Swoole / RoadRunner / FrankenPHP 常驻内存模式，性能与主流语言同档。
+      它的真正优势是<b>部署门槛最低</b>：任意虚拟主机丢文件就能跑。
+    </p>
+    <ul class="plain-list">
+      <li><span class="k">适合</span><span>CMS 与内容站、电商、中小型业务系统、外包交付项目</span></li>
+      <li><span class="k">注意</span><span>历史代码质量参差，选框架比选语言更重要；务必开 OPcache</span></li>
+      <li><span class="k">部署</span><span>php-fpm + Nginx，或用 Laravel Octane 提升吞吐</span></li>
+    </ul>
+
+    <h3>C# / .NET：跨平台的企业方案</h3>
+    <p>
+      .NET Core 之后完全跨平台且开源，ASP.NET Core 在 TechEmpower 基准中长期名列前茅。
+      <code>async/await</code>、LINQ、强类型工具链体验极佳，Visual Studio / Rider 的调试与重构能力是同类最强之一。
+    </p>
+    <ul class="plain-list">
+      <li><span class="k">适合</span><span>企业内网系统、需要与微软生态集成、游戏服务端（Unity 同语言）</span></li>
+      <li><span class="k">注意</span><span>开源社区规模小于 Java/JS；国内岗位相对集中在特定行业</span></li>
+      <li><span class="k">部署</span><span>可发布为自包含程序或 AOT 原生镜像，内存 100～300MB</span></li>
+    </ul>
+
+    <h3>Rust：把正确性和性能同时拉满</h3>
+    <p>
+      编译期所有权检查消灭了数据竞争和大部分内存泄漏，无 GC 意味着延迟可预测。
+      代价明确：<b>开发速度慢，学习周期长</b>（普遍认为 3～6 个月才能顺畅写业务）。
+      它更适合作为"性能瓶颈模块"或"基础设施"的语言，而不是全站业务语言。
+    </p>
+    <ul class="plain-list">
+      <li><span class="k">适合</span><span>高性能代理（如 Pingora）、数据库/存储、WASM 模块、CLI 工具、AI 推理服务</span></li>
+      <li><span class="k">注意</span><span>前期生产力低；异步生态（tokio）与生命周期组合较复杂，建议先学同步 Rust</span></li>
+      <li><span class="k">部署</span><span>单二进制，镜像可小于 20MB，内存占用极低</span></li>
+    </ul>
+
+    <h3>Ruby：为开发者幸福感设计</h3>
+    <p>
+      Rails 的"约定优于配置"极大缩短了 MVP 的开发时间，大量样板代码由生成器完成。
+      但运行性能与并发能力一般，在国内岗位较少，历史项目维护居多。
+    </p>
+
+    <h2 id="framework-eco">五、框架生态速查</h2>
+    <div class="table-wrap">
+      <table class="table-key">
+        <thead><tr><th>需要什么</th><th>Node.js</th><th>Python</th><th>Java</th><th>Go</th><th>PHP</th></tr></thead>
+        <tbody>
+          <tr><td>Web 框架</td><td>Express / NestJS</td><td>FastAPI / Django</td><td>Spring Boot</td><td>Gin / Echo</td><td>Laravel</td></tr>
+          <tr><td>数据库 ORM</td><td>Prisma / Drizzle</td><td>SQLAlchemy</td><td>JPA / MyBatis</td><td>GORM / sqlc</td><td>Eloquent</td></tr>
+          <tr><td>数据校验</td><td>Zod / class-validator</td><td>Pydantic</td><td>Jakarta Validation</td><td>validator</td><td>Laravel Validation</td></tr>
+          <tr><td>鉴权</td><td>passport / jose</td><td>python-jose</td><td>Spring Security</td><td>golang-jwt</td><td>Sanctum / Passport</td></tr>
+          <tr><td>后台管理</td><td>AdminJS</td><td>Django Admin</td><td>Spring Admin</td><td>GoAdmin</td><td>Filament</td></tr>
+          <tr><td>任务队列</td><td>BullMQ</td><td>Celery</td><td>Spring Batch</td><td>asynq</td><td>Laravel Queue</td></tr>
+          <tr><td>测试</td><td>Vitest / Jest</td><td>pytest</td><td>JUnit 5</td><td>testing + testify</td><td>Pest / PHPUnit</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2 id="pitfalls">六、六个常见误区</h2>
+    <div class="accordion">
+      <details open>
+        <summary>误区一：性能是选语言的第一标准</summary>
+        <div class="acc-body">
+          <p>真实业务的瓶颈 90% 出现在数据库查询、外部接口调用和缓存策略上，而不是语言本身。
+          一个加了索引的 MySQL 查询比语言的选择重要一个数量级。
+          <b>先用业务量验证瓶颈，再考虑换语言或加缓存。</b></p>
+        </div>
+      </details>
+      <details>
+        <summary>误区二：换语言能解决架构问题</summary>
+        <div class="acc-body">
+          <p>代码混乱、接口慢、部署麻烦，换语言的成本是重写整个系统，而收获往往只是"看起来更现代"。
+          如果当前语言的生态确实不符合业务方向（例如要做 AI 推理却用 PHP），那才值得迁移。</p>
+        </div>
+      </details>
+      <details>
+        <summary>误区三：只会一门语言找不到工作</summary>
+        <div class="acc-body">
+          <p>招聘看的是<b>工程能力</b>：懂不懂 HTTP、能不能设计表、会不会查慢查询、有没有排查过线上问题。
+          语言是最容易被验证也最容易被学习的一环。有实际项目经验的一门语言，胜过多门语言的 Hello World。</p>
+        </div>
+      </details>
+      <details>
+        <summary>误区四：同时学三四种语言</summary>
+        <div class="acc-body">
+          <p>同时入门多门语言会导致"什么都不会用"的状态：每门都停在语法层，都没有项目经验。
+          正确做法是<b>一门学到底（能做到完整项目上线），再学第二门</b>。有了第一门项目的经验，第二门通常一两周就能上手。</p>
+        </div>
+      </details>
+      <details>
+        <summary>误区五：追新语言等于技术先进</summary>
+        <div class="acc-body">
+          <p>新语言意味着生态不完善、招人困难、招聘市场小、遇到问题搜不到答案。
+          生产环境应该选"无聊但成熟"的技术。新技术可以放在个人项目中试水，验证过再引入线上。</p>
+        </div>
+      </details>
+      <details>
+        <summary>误区六：忽略部署成本</summary>
+        <div class="acc-body">
+          <p>Go 应用只占 30MB 内存的服务器，换到 JVM 可能需要 1GB —— 这是真金白银的差别，也直接影响容器密度和扩容成本。
+          选型时把"运行成本 × 三年"算进去，很多纠结会迎刃而解。</p>
+        </div>
+      </details>
+    </div>
+
+    <h2 id="start">七、选定之后：两周入门路线</h2>
+    <p>假设你选了任意一门语言，以下两周计划通用。</p>
+    <ol class="steps">
+      <li>
+        <h4>第 1～2 天：语言基础</h4>
+        <p>变量、类型、条件、循环、函数、集合、错误处理、模块导入。目标：能手写冒泡排序和字符串处理，不查语法。</p>
+      </li>
+      <li>
+        <h4>第 3～4 天：包管理与项目结构</h4>
+        <p>学会用官方包管理器建项目（npm / pip+venv / Maven / go mod / Composer / NuGet / Cargo），理解依赖声明文件与目录约定。</p>
+      </li>
+      <li>
+        <h4>第 5～7 天：HTTP 服务与路由</h4>
+        <p>用框架起一个服务，实现 5 个接口：列表、详情、创建、更新、删除。学会读取 query、body、header，返回正确状态码。</p>
+      </li>
+      <li>
+        <h4>第 8～10 天：接数据库</h4>
+        <p>本地跑 MySQL/PostgreSQL（用 Docker 最省事），用 ORM 或驱动完成增删改查，理解连接池与事务。</p>
+      </li>
+      <li>
+        <h4>第 11～12 天：鉴权与校验</h4>
+        <p>实现注册登录（密码用 bcrypt/argon2 哈希）、签发 JWT 或 Session、写参数校验、统一错误响应格式。</p>
+      </li>
+      <li>
+        <h4>第 13～14 天：打包与部署</h4>
+        <p>写 Dockerfile 构建镜像，本地 <code>docker compose up</code> 跑通，然后推到服务器。至此你有了完整的后端开发闭环。</p>
+      </li>
+    </ol>
+
+    <div class="callout callout--info">
+      <span class="callout__ico">🧭</span>
+      <div>
+        <strong>下一步</strong>
+        <p>服务跑起来了，但代码怎么组织、表怎么设计、接口怎么规范？进入 <a href="architecture.html">搭建思路</a>。</p>
+      </div>
+    </div>
+
+    <div class="pager">
+      <a class="prev" href="frontend.html"><span>上一篇</span><b>← 前端基础</b></a>
+      <a class="next" href="architecture.html"><span>下一篇</span><b>搭建思路 →</b></a>
+    </div>
+  </main>
+
+  <aside class="toc" aria-label="本页目录"></aside>
+</div>
+
+<div class="mask"></div>
+
+<footer class="footer">
+  <div class="footer__grid">
+    <div>
+      <h5>基础篇</h5>
+      <ul>
+        <li><a href="frontend.html">前端基础</a></li>
+        <li><a href="languages.html">后端语言选型</a></li>
+      </ul>
+    </div>
+    <div>
+      <h5>工程篇</h5>
+      <ul>
+        <li><a href="architecture.html">搭建思路</a></li>
+        <li><a href="deployment.html">部署思路</a></li>
+        <li><a href="ops.html">运维思路</a></li>
+      </ul>
+    </div>
+    <div>
+      <h5>本页速查</h5>
+      <ul>
+        <li><a href="#compare">语言总表</a></li>
+        <li><a href="#sample">八种语言写法</a></li>
+        <li><a href="#pitfalls">六个误区</a></li>
+      </ul>
+    </div>
+    <div>
+      <h5>关于</h5>
+      <ul>
+        <li><a href="../index.html#principles">六条核心原则</a></li>
+        <li><a href="../index.html#faq">常见问题</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="footer__bottom">
+    <span>网站开发基础教程 · 后端语言选型</span>
+    <span>快捷键 <code>/</code> 搜索章节</span>
+  </div>
+</footer>
+
+<script src="../assets/js/main.js"></script>
+</body>
+</html>

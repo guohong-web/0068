@@ -1,0 +1,1019 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>原理与概念 · 网站开发基础教程</title>
+<meta name="description" content="Web 开发最基础的概念与原理：请求响应模型、网络分层、HTTP 协议性质、HTTPS 加密、编码与序列化、进程线程并发、状态与身份、渲染模式、分层与耦合、CAP 与一致性。">
+<link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body data-root="../">
+<div id="progress"></div>
+
+<header class="topbar">
+  <button class="topbar__burger" type="button" aria-label="打开导航">☰</button>
+  <a class="brand" href="../index.html">
+    <span class="brand__logo">W</span>
+    <span>网站开发基础教程</span>
+    <span class="brand__sub">Web Dev Handbook</span>
+  </a>
+  <div class="topbar__spacer"></div>
+  <nav class="topbar__nav">
+    <a href="../index.html">首页</a>
+    <a class="is-active" href="concepts.html">原理</a>
+    <a href="frontend.html">前端</a>
+    <a href="languages.html">后端</a>
+    <a href="architecture.html">搭建</a>
+    <a href="deployment.html">部署</a>
+    <a href="ops.html">运维</a>
+  </nav>
+  <button class="icon-btn" id="themeBtn" type="button" aria-label="切换主题">☾</button>
+</header>
+
+<div class="layout">
+  <aside class="sidebar" aria-label="章节导航"></aside>
+
+  <main class="content">
+    <span class="eyebrow">◈ 原理篇 · 建议最先读</span>
+    <h1>原理与概念</h1>
+    <p class="lede">
+      技术名词每天都在变，底层的性质与原理几十年没变。
+      这一篇不教任何具体语法，只讲清楚 <b>Web 是什么、协议是怎么工作的、计算机是怎么同时干很多事的、系统为什么需要分层</b>。
+      学完之后再看后面五章，你会发现所有工具都只是这些原理的具体实现。
+    </p>
+
+    <div class="callout callout--tip">
+      <span class="callout__ico">💡</span>
+      <div>
+        <strong>怎么读这一篇</strong>
+        <p>正文里<span class="term" data-def="像这样带虚线下划线的词，鼠标悬停或点一下就能看到一句话解释。全站共覆盖上百个专业名词。">带虚线下划线的专业词</span>都可以悬停查看解释；
+        如果想集中查阅，请打开 <a href="glossary.html">专业术语词典</a>。本篇共 10 节，建议按顺序读，每节 15～25 分钟。</p>
+      </div>
+    </div>
+
+    <h2 id="web-model">一、Web 的本质：请求—响应模型</h2>
+
+    <div class="concept">
+      <h3 class="concept__t">网站到底是什么<em>Website / Web Application</em></h3>
+      <p><span class="label">定义</span>网站是一套运行在服务器上的程序，它把一堆<b>资源</b>用统一的<b>地址</b>标识出来，并用统一的<b>协议</b>对外提供访问。</p>
+      <p><span class="label">三个要素</span>① 资源（一个页面、一段数据、一张图片）；② 地址（URL，用来唯一指认资源）；③ 协议（HTTP，规定怎么请求、怎么回应）。</p>
+      <p><span class="label">性质</span>Web 天生是<b>分布式的</b>（代码和数据不在一台机器上）、<b>无状态的</b>（每个请求互相独立）、<b>基于文本的</b>（HTTP 报文是人类可读的文本）。这三条性质解释了后面几乎所有设计问题。</p>
+    </div>
+
+    <div class="callout callout--warn">
+      <span class="callout__ico">⚠️</span>
+      <div>
+        <strong>最常见的认知错误</strong>
+        <p>初学者常把"网站"理解成"一堆 HTML 文件放在机器上"。这只对静态网站成立。
+        真正的 Web 应用，服务器上跑的是<b>一个持续运行的进程</b>，它收到请求后现场计算、查数据库、拼装结果再返回 —— 同一个 URL 在不同时间、不同用户下返回的内容可以完全不同。</p>
+      </div>
+    </div>
+
+    <h3>静态网站、动态网站、Web 应用的区别</h3>
+    <div class="table-wrap">
+      <table class="table-key">
+        <thead><tr><th>类型</th><th>本质</th><th>内容如何产生</th><th>典型例子</th></tr></thead>
+        <tbody>
+          <tr><td>静态网站</td><td>一批预先写好的文件</td><td>作者手写，服务器只负责原样发送</td><td>个人博客、产品文档、公司官网介绍页</td></tr>
+          <tr><td>动态网站</td><td>程序 + 模板 + 数据库</td><td>服务器每次请求时用模板拼出 HTML</td><td>新闻站、论坛、企业后台（服务端渲染）</td></tr>
+          <tr><td>Web 应用</td><td>前端程序 + 后端 API + 数据库</td><td>后端只返回数据，页面由浏览器端程序渲染</td><td>在线文档、管理系统、聊天工具</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="muted">三者的界线是模糊的，很多项目是混合的：首屏用服务端渲染，交互部分用前端程序接管。理解这个分类的意义在于 —— 它会直接决定你的<b>部署方式</b>（静态托管 vs 需要服务器）。</p>
+
+    <h3>客户端 / 服务器模型</h3>
+    <div class="compare">
+      <div class="side-a">
+        <h4>客户端 Client</h4>
+        <ul>
+          <li>主动发起请求的一方</li>
+          <li>浏览器、手机 App、小程序、另一个后端服务</li>
+          <li>数量多、环境不可控、可能被恶意篡改</li>
+          <li>因此：<b>永远不要信任客户端传来的任何数据</b></li>
+        </ul>
+      </div>
+      <div class="side-b">
+        <h4>服务器 Server</h4>
+        <ul>
+          <li>被动等待并响应请求的一方</li>
+          <li>一台机器上可以同时跑多个服务</li>
+          <li>环境可控、性能有限、需要保护</li>
+          <li>因此：<b>所有校验、权限、限额都必须在服务端做</b></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="concept">
+      <h3 class="concept__t">B/S 架构与 C/S 架构<em>Browser-Server / Client-Server</em></h3>
+      <p><span class="label">B/S</span>客户端是浏览器。用户无需安装，升级只需改服务器。代价是能力受浏览器沙箱限制（不能随意读写本地文件、不能后台常驻）。</p>
+      <p><span class="label">C/S</span>客户端是专门的安装程序（如桌面软件、手机 App）。能力强、体验好，但需要分发与更新、要适配多个平台。</p>
+      <p><span class="label">趋势</span>两者在融合：Web 端通过 PWA、WebAssembly 越来越"像原生应用"，原生端大量使用 WebView 嵌入网页。</p>
+    </div>
+
+    <h3>URL 的解剖</h3>
+    <div class="diagram">
+      <div class="diagram__cap">一个完整 URL 的组成部分</div>
+      <pre>https://user:pass@app.example.com:443/api/v1/orders/123?status=0&amp;page=2#detail
+└──┬─┘ └───┬───┘└───────┬───────┘└┬┘└────────┬────────┘└────┬────┘└──┬─┘
+ 协议    认证信息      主机/域名      端口      路径 Path      查询串    片段
+
+协议 Scheme      用什么规则通信：http / https / ws / ftp
+主机 Host        目标机器的名字，需要经 DNS 解析成 IP
+端口 Port        一台机器上的"门牌号"，用于区分不同服务。http 默认 80，https 默认 443
+路径 Path        资源的层级位置，服务端的路由就是靠它来匹配
+查询串 Query     以 ? 开头、&amp; 分隔的键值对，用于筛选、分页、排序
+片段 Fragment    以 # 开头，只给浏览器看，<b>永远不会发送到服务器</b></pre>
+    </div>
+    <p class="muted">记住最后一条很重要：前端用 <code>#</code> 做路由（Hash 路由）就是因为这部分变化不会触发新的网络请求。</p>
+
+    <h3>一次访问，完整经过了多少环节</h3>
+    <div class="diagram">
+      <div class="diagram__cap">从输入网址到看到页面</div>
+      <pre>① 你在地址栏输入 app.example.com
+        ↓
+② 浏览器查缓存：本地 DNS 缓存 → 系统 hosts → 路由器 → 运营商 DNS
+        ↓  都没有才发起真正的 DNS 查询
+③ DNS 递归查询：根域名服务器 → .com 顶级域 → example.com 权威服务器 → 得到 IP
+        ↓
+④ 建立 TCP 连接（三次握手）：客户端 SYN → 服务端 SYN+ACK → 客户端 ACK
+        ↓
+⑤ TLS 握手：校验证书 → 协商密钥（HTTPS 才有这一步）
+        ↓
+⑥ 浏览器发出 HTTP 请求：GET / HTTP/1.1  + 请求头
+        ↓
+⑦ 请求到达机房：可能先经过 CDN 边缘节点 / 负载均衡器
+        ↓
+⑧ Web 服务器（Nginx）判断：是静态文件就直接返回，是接口就转发给应用
+        ↓
+⑨ 应用服务器执行代码：鉴权 → 业务逻辑 → 查询缓存 → 查询数据库
+        ↓
+⑩ 数据库返回数据（磁盘 IO → 内存 → 网络）
+        ↓
+⑪ 应用拼装 JSON / HTML，带上响应头返回
+        ↓
+⑫ 浏览器解析 HTML → 构建 DOM → 计算样式 → 布局 → 绘制 → 显示
+        ↓
+⑬ 页面里的 JS 继续发起接口请求，拿到数据后局部更新界面
+
+其中任何一跳失败，用户看到的结果都是"打不开" ——
+而这 13 个环节里，只有 ⑧⑨⑩ 是你写的代码，其余都属于"必须理解的基础设施"。</pre>
+    </div>
+
+    <div class="concept">
+      <h3 class="concept__t">无状态<em>Stateless</em></h3>
+      <p><span class="label">定义</span>服务端不保存与客户端交互的历史记忆。每个请求都是独立的，服务端只根据本次请求携带的信息来决定如何处理。</p>
+      <p><span class="label">性质</span>这是 HTTP 协议的设计选择，不是缺陷。无状态让服务器可以<b>随意重启、随意水平扩容</b>：任意一台机器都能处理任意一个请求，因为大家不需要共享"谁登录了"这份记忆。</p>
+      <p><span class="label">后果</span>代价是每次请求都要重复携带身份信息（Token / Cookie），而且无法天然实现"登录状态""购物车"。于是人类发明了 Cookie、Session、Token 来在无状态协议之上"假装有状态" —— 详见 <a href="#state">第七节</a>。</p>
+    </div>
+
+    <h2 id="network">二、网络分层与协议</h2>
+
+    <div class="concept">
+      <h3 class="concept__t">协议<em>Protocol</em></h3>
+      <p><span class="label">定义</span>通信双方事先约定好的一套规则，规定数据的格式、顺序和含义。就像两个人约定用中文、按"问—答"的顺序交流。</p>
+      <p><span class="label">性质</span>协议必须是<b>双方共识</b>，且必须<b>可分层</b>。你可以换掉发送内容的语言（应用层），而不影响邮政系统怎么送信（传输层）—— 这正是分层思想的价值。</p>
+    </div>
+
+    <h3>为什么要分层</h3>
+    <p>
+      把"从一台电脑传数据到另一台电脑"这一件事拆成若干层，每层只解决一个问题、只依赖下一层提供的能力。
+      好处有三条：<b>① 每层可以独立替换</b>（WiFi 换成光纤，上面的 HTTP 一行代码不用改）；
+      <b>② 每层可以独立优化</b>（专门做 CDN 的公司只需关心传输与缓存）；
+      <b>③ 故障可以按层定位</b>（ping 通但网页打不开，说明问题不在网络层）。
+    </p>
+
+    <div class="diagram">
+      <div class="diagram__cap">OSI 七层模型 与 TCP/IP 四层模型 的对应关系</div>
+      <pre>OSI 七层（教学模型，实际不用）        TCP/IP 四层（实际在用）        典型协议
+─────────────────────────────────────────────────────────────────────────────
+7 应用层  Application  ┐
+6 表示层  Presentation │ ──┐
+5 会话层  Session      ┘   ├──→  4 应用层  Application     HTTP / HTTPS / DNS
+                           │                             SSH / FTP / SMTP
+4 传输层  Transport    ────┼──→  3 传输层  Transport       TCP / UDP / QUIC
+3 网络层  Network      ────┼──→  2 网络层  Internet        IP / ICMP / 路由协议
+2 数据链路层 Data Link ┐   │
+1 物理层  Physical     ┘───┴──→  1 网络接口层 Link       以太网 / WiFi / 光纤</pre>
+    </div>
+
+    <h3>每一层做什么、出问题是什么表现</h3>
+    <div class="table-wrap">
+      <table class="table-key">
+        <thead><tr><th>层</th><th>关心什么</th><th>核心概念</th><th>这一层坏了的表现</th></tr></thead>
+        <tbody>
+          <tr><td>应用层</td><td>数据的含义</td><td>HTTP、DNS、WebSocket</td><td>返回 404 / 500，页面内容错乱，接口字段不对</td></tr>
+          <tr><td>传输层</td><td>端到端可靠传输、端口</td><td>TCP、UDP、端口号、重传</td><td>连接被拒绝（Connection refused）、超时、丢包重传导致变慢</td></tr>
+          <tr><td>网络层</td><td>数据包怎么从 A 走到 B</td><td>IP 地址、路由、ICMP</td><td>ping 不通、路由不通、跨网访问失败</td></tr>
+          <tr><td>链路层 / 物理层</td><td>比特如何在物理介质上传输</td><td>MAC 地址、网卡、交换机</td><td>网卡掉线、链路断开、机房断网</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout callout--info">
+      <span class="callout__ico">🧪</span>
+      <div>
+        <strong>用分层思维排查问题</strong>
+        <p>网站打不开时，从下往上逐层验证，第一层失败的地方就是问题所在：<br>
+        <code>ping</code>（网络层）→ <code>nc -zv host 443</code>（传输层端口）→ <code>curl -I</code>（应用层协议）→ 看响应内容（业务层）。<br>
+        这个顺序能让你在 30 秒内判断"是 DNS 问题、网络问题、还是代码问题"，而不是盲目重启服务器。</p>
+      </div>
+    </div>
+
+    <h3>IP、端口、域名、DNS 的关系</h3>
+    <div class="diagram">
+      <div class="diagram__cap">四者的分工</div>
+      <pre>域名 example.com     ──给人看的、便于记忆的别名
+      ↓ DNS 解析（本质是一个巨大的分布式键值数据库）
+IP 地址 93.184.216.34 ──网络层用来定位"哪一台机器"
+      ↓
+端口 443              ──传输层用来定位"机器上的哪一个程序"
+      ↓
+URL /api/orders       ──应用层用来定位"该程序里的哪个资源"</pre>
+    </div>
+
+    <div class="concept">
+      <h3 class="concept__t">DNS<em>Domain Name System</em></h3>
+      <p><span class="label">定义</span>把域名翻译成 IP 地址的系统。它是一个全球分布、分层授权的数据库，没有单一中心节点。</p>
+      <p><span class="label">性质</span><b>分层授权</b>：根服务器只管 .com 在哪，.com 只管 example.com 在哪，最终的答案由域名所有者自己的权威服务器给出。<b>可缓存</b>：每一层都可以缓存结果（缓存时长由 TTL 决定），这是它能扛住全球查询量的原因。</p>
+      <p><span class="label">为什么重要</span>换服务器、做灰度、上 CDN，本质都是在改 DNS 或让 CDN 通过 CNAME 接管解析。理解 TTL 是理解"为什么改了解析没立刻生效"的前提。</p>
+    </div>
+
+    <h3>TCP 与 UDP：两种传输性质</h3>
+    <div class="compare">
+      <div class="side-a">
+        <h4>TCP · 可靠但重</h4>
+        <ul>
+          <li>面向连接：先握手建立连接再传数据</li>
+          <li>保证顺序、保证不丢、保证不重复</li>
+          <li>有流量控制与拥塞控制，会自动降速</li>
+          <li>代价：延迟更高，头部开销更大</li>
+          <li>用于：网页、接口、文件传输、数据库</li>
+        </ul>
+      </div>
+      <div class="side-b">
+        <h4>UDP · 快但不可靠</h4>
+        <ul>
+          <li>无连接：直接发，不等对方回应</li>
+          <li>不保证顺序、不保证送达</li>
+          <li>没有拥塞控制，想发多快发多快</li>
+          <li>优点：延迟低，头部只有 8 字节</li>
+          <li>用于：DNS 查询、视频直播、游戏、HTTP/3</li>
+        </ul>
+      </div>
+    </div>
+    <p class="muted">"可靠"不是免费的：TCP 的可靠性靠重传和确认实现，代价是延迟。直播宁可丢几帧也不能卡顿，所以选 UDP；下载文件不能缺字节，所以选 TCP。这就是<b>性质决定选型</b>的典型例子。</p>
+
+    <div class="concept">
+      <h3 class="concept__t">三次握手为什么是三次</h3>
+      <p><span class="label">目的</span>让双方都确认两件事：<b>我的发送能力正常</b>、<b>你的接收和发送能力都正常</b>。</p>
+      <p><span class="label">过程</span>① 客户端发 SYN（我能发，你在吗）→ ② 服务端回 SYN+ACK（我在，我也能发）→ ③ 客户端回 ACK（我收到了）。</p>
+      <p><span class="label">为什么不能两次</span>如果只握两次，服务端无法确认客户端收到了自己的回应，也无法确认客户端的接收能力。而且历史上两次握手会因"过期请求"造成服务端建立无用连接。<b>三次是验证双向能力的最小次数。</b></p>
+      <p><span class="label">四次挥手</span>关闭连接时，一方说"我没数据要发了"，另一方可能还有数据要发，所以要分开发送确认和关闭请求，共四次。这解释了大量 <code>TIME_WAIT</code> 连接的由来。</p>
+    </div>
+
+    <h2 id="http">三、HTTP 协议的性质</h2>
+
+    <div class="concept">
+      <h3 class="concept__t">HTTP<em>HyperText Transfer Protocol</em></h3>
+      <p><span class="label">定义</span>应用层的请求—响应协议，规定客户端如何描述"我要什么"，服务端如何描述"结果是什么"。</p>
+      <p><span class="label">性质一：基于文本</span>报文是纯文本，人类可读、易调试（这是它能统治世界的重要原因）。</p>
+      <p><span class="label">性质二：无状态</span>服务端不记请求之间的关联，见前文。</p>
+      <p><span class="label">性质三：可扩展</span>通过头部字段可以无限扩展语义，不需要改协议本身。几乎所有的工程实践（缓存、鉴权、跨域、灰度）都靠头部字段实现。</p>
+    </div>
+
+    <h3>报文结构</h3>
+    <div class="diagram">
+      <div class="diagram__cap">请求报文与响应报文</div>
+      <pre>【请求】                                    【响应】
+POST /api/v1/orders HTTP/1.1     ← 请求行    HTTP/1.1 201 Created          ← 状态行
+Host: api.example.com            ┐         Content-Type: application/json ┐
+Content-Type: application/json   │ 请求头   Cache-Control: no-store         │ 响应头
+Authorization: Bearer eyJhbG...  │         X-Request-Id: 8f3a-2b1c          │
+User-Agent: Mozilla/5.0          ┘         Set-Cookie: sid=abc; HttpOnly    ┘
+                                          ← 空行（分隔头与体）
+← 空行（必须，用于分隔头与体）              {"id":1024,"amount":"99.00"}
+{"items":[{"goodsId":778,"qty":2}]}   ← 请求体
+</pre>
+    </div>
+    <p class="muted">注意那个"空行"：它是真实的协议要求。少了它，服务器会把请求体当成头部字段继续解析，导致各种莫名其妙的错误。</p>
+
+    <h3>方法（Method）的语义</h3>
+    <p>HTTP 方法不只是"不同名字"，它们有严格定义的<b>性质</b>，中间件、缓存、爬虫都依赖这些性质做判断。</p>
+    <div class="table-wrap">
+      <table class="table-key">
+        <thead><tr><th>方法</th><th>语义</th><th>安全（不改数据）</th><th>幂等（执行多次结果相同）</th><th>可缓存</th></tr></thead>
+        <tbody>
+          <tr><td>GET</td><td>获取资源</td><td>是</td><td>是</td><td>是</td></tr>
+          <tr><td>HEAD</td><td>只取响应头</td><td>是</td><td>是</td><td>是</td></tr>
+          <tr><td>POST</td><td>创建资源 / 执行动作</td><td>否</td><td><b>否</b></td><td>否</td></tr>
+          <tr><td>PUT</td><td>整体替换资源</td><td>否</td><td>是</td><td>否</td></tr>
+          <tr><td>PATCH</td><td>局部更新资源</td><td>否</td><td>通常否</td><td>否</td></tr>
+          <tr><td>DELETE</td><td>删除资源</td><td>否</td><td>是</td><td>否</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="concept">
+      <h3 class="concept__t">幂等性<em>Idempotence</em></h3>
+      <p><span class="label">定义</span>同一个操作执行一次和执行多次，对系统状态的影响相同。"给订单打上「已支付」"是幂等的；"余额减 10 元"不是。</p>
+      <p><span class="label">为什么重要</span>网络一定会出现"请求发出去了但响应没回来"的情况。客户端不确定是否成功，就会重试。如果接口不幂等，一次重试就可能<b>重复扣款</b>。</p>
+      <p><span class="label">工程做法</span>① 用幂等键（<code>Idempotency-Key</code> 头 + 唯一索引）；② 用状态机约束流转（已支付的订单不能再支付）；③ 用数据库唯一约束兜底。</p>
+    </div>
+
+    <h3>状态码的五大类</h3>
+    <div class="table-wrap">
+      <table class="table-key">
+        <thead><tr><th>类别</th><th>含义</th><th>责任方</th><th>常见</th></tr></thead>
+        <tbody>
+          <tr><td>1xx</td><td>信息性，请求已收到正在处理</td><td>—</td><td>101 协议切换（WebSocket）</td></tr>
+          <tr><td>2xx</td><td>成功</td><td>—</td><td>200 OK、201 Created、204 No Content</td></tr>
+          <tr><td>3xx</td><td>重定向，需要再发一次请求</td><td>—</td><td>301 永久、302 临时、304 走缓存、307 保方法</td></tr>
+          <tr><td>4xx</td><td>客户端错误</td><td><b>调用方</b></td><td>400、401、403、404、409、429</td></tr>
+          <tr><td>5xx</td><td>服务端错误</td><td><b>服务方</b></td><td>500、502、503、504</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="muted">4xx 与 5xx 的区分极其重要：它决定了"该谁去修"。监控系统通常只对 5xx 报警，因为 4xx 是用户用错了（或攻击探测），5xx 才是自己坏了。</p>
+
+    <h3>常用头部字段</h3>
+    <div class="table-wrap">
+      <table class="table-key">
+        <thead><tr><th>头部</th><th>方向</th><th>作用</th></tr></thead>
+        <tbody>
+          <tr><td>Host</td><td>请求</td><td>目标域名。<b>一台服务器托管多个网站就是靠它区分</b></td></tr>
+          <tr><td>Content-Type</td><td>双向</td><td>说明body是什么格式，如 <code>application/json; charset=utf-8</code></td></tr>
+          <tr><td>Content-Length</td><td>双向</td><td>body 字节数。用于判断消息边界</td></tr>
+          <tr><td>Authorization</td><td>请求</td><td>携带凭证，通常是 <code>Bearer token</code></td></tr>
+          <tr><td>Cookie / Set-Cookie</td><td>请求 / 响应</td><td>浏览器自动携带与写入的小段状态数据</td></tr>
+          <tr><td>Cache-Control</td><td>响应</td><td>缓存策略：能否缓存、缓存多久、是否必须回源校验</td></tr>
+          <tr><td>ETag / Last-Modified</td><td>响应</td><td>资源版本标识，用于协商缓存（304）</td></tr>
+          <tr><td>Accept / Accept-Encoding</td><td>请求</td><td>客户端能接受的格式与压缩算法</td></tr>
+          <tr><td>Origin / Referer</td><td>请求</td><td>请求来自哪个页面，用于跨域校验与防 CSRF</td></tr>
+          <tr><td>X-Forwarded-For / X-Real-IP</td><td>请求</td><td>经过代理后，保留真实客户端 IP</td></tr>
+          <tr><td>Strict-Transport-Security</td><td>响应</td><td>HSTS，强制浏览器以后只用 HTTPS 访问本站</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>连接管理：从短连接到多路复用</h3>
+    <div class="diagram">
+      <div class="diagram__cap">HTTP 各版本的连接性质演进</div>
+      <pre>HTTP/1.0  每个请求新建一个 TCP 连接，用完就关
+          请求1 ──握手──发送──响应──关闭
+          请求2 ──握手──发送──响应──关闭      三次握手很贵，浪费严重
+
+HTTP/1.1  长连接（Keep-Alive）+ 管道化
+          握手──┬──请求1──响应1
+                ├──请求2──响应2        └── 但响应必须按顺序返回
+                └──请求3──响应3            前一个慢，后面全部排队等待
+                                         ← 这就是"队头阻塞"
+
+HTTP/2    二进制分帧 + 多路复用
+          握手──┬──请求1 ─┐
+                ├──请求2 ─┼── 交错传输，谁先准备好谁先回
+                └──请求3 ─┘        ← 应用层队头阻塞被解决
+                                 ← 但 TCP 层一旦丢包，所有流仍要等待
+
+HTTP/3    基于 QUIC（跑在 UDP 上）
+          握手（0-RTT 或 1-RTT）── 各流独立，丢包只影响自己
+          ← 彻底解决传输层队头阻塞，弱网环境提升明显</pre>
+    </div>
+
+    <div class="callout callout--info">
+      <span class="callout__ico">🚀</span>
+      <div>
+        <strong>这条演进线带来的实践结论</strong>
+        <p>① 开 HTTPS 不只是为了安全，还因为 HTTP/2、HTTP/3 <b>基本上只在 HTTPS 下启用</b>；<br>
+        ② 老项目用"域名分片 / 雪碧图"来绕过 1.1 的并发限制，在 HTTP/2 下这些优化反而有害（失去了多路复用的收益）；<br>
+        ③ 现代前端"代码分割 + 懒加载"之所以可行，前提是 HTTP/2 让多个小文件的并发请求不再昂贵。</p>
+      </div>
+    </div>
+
+    <div class="accordion">
+      <details>
+        <summary>常见误解：GET 不能带请求体？</summary>
+        <div class="acc-body">
+          <p>协议并没有禁止 GET 带 body，但<b>语义上未定义</b>，很多服务器、代理、缓存会直接丢弃它。所以工程上的结论是：GET 不应依赖请求体传递数据，需要传复杂条件时改用 POST，或把条件编码进查询串。</p>
+        </div>
+      </details>
+      <details>
+        <summary>常见误解：返回 200 就是成功了？</summary>
+        <div class="acc-body">
+          <p>很多老系统习惯"永远返回 200 + body 里写 <code>success: false</code>"。这让缓存、代理、监控全部失去判断依据。正确做法是让状态码承担语义，body 只承载业务数据与错误明细。</p>
+        </div>
+      </details>
+      <details>
+        <summary>常见误解：304 表示没改所以不返回内容？</summary>
+        <div class="acc-body">
+          <p>正确。304 是协商缓存的结果：浏览器带着 <code>If-None-Match</code> 问"我这份还有效吗"，服务器答"有效"，于是浏览器直接用本地副本。它确实省了带宽，但依然发生了一次完整的网络往返 —— 所以更强的做法是让浏览器在有效期内<b>完全不发请求</b>（强缓存）。</p>
+        </div>
+      </details>
+    </div>
+
+    <h2 id="https">四、HTTPS 与加密</h2>
+
+    <div class="concept">
+      <h3 class="concept__t">HTTPS<em>HTTP over TLS</em></h3>
+      <p><span class="label">定义</span>HTTP 加上 TLS 加密层，即 <code>HTTP + 加密 + 身份认证 + 完整性校验</code>。</p>
+      <p><span class="label">它解决三个问题</span>
+      <b>① 机密性</b>：中间人抓包看不到明文（防运营商劫持插广告）；
+      <b>② 完整性</b>：内容被篡改能被发现；
+      <b>③ 身份认证</b>：确认你连的确实是 example.com，而不是伪装的钓鱼站。</p>
+      <p><span class="label">性质</span>HTTP 本身不加密，HTTPS 是在 HTTP 和 TCP 之间插了一层 TLS。对上层应用来说，HTTP 的语义完全不变 —— 所以"支持 HTTPS"通常只需要改服务器配置，不需要改代码。</p>
+    </div>
+
+    <h3>三种密码学工具的性质对比</h3>
+    <div class="table-wrap">
+      <table class="table-key">
+        <thead><tr><th>工具</th><th>性质</th><th>速度</th><th>能否解密</th><th>用途</th></tr></thead>
+        <tbody>
+          <tr><td>对称加密<br><small>AES、ChaCha20</small></td><td>同一把密钥加解密</td><td><b>快</b></td><td>能（有密钥）</td><td>加密实际传输的数据</td></tr>
+          <tr><td>非对称加密<br><small>RSA、ECC</small></td><td>公钥加密、私钥解密（或反之签名）</td><td>慢（约慢千倍）</td><td>私钥持有者能</td><td>安全地在网络上交换密钥、做数字签名</td></tr>
+          <tr><td>哈希<br><small>SHA-256、bcrypt</small></td><td>单向，不可逆</td><td>快（bcrypt 故意慢）</td><td><b>不能</b></td><td>存储密码、校验文件完整性</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="concept">
+      <h3 class="concept__t">为什么"用非对称加密传输对称密钥"</h3>
+      <p><span class="label">矛盾</span>非对称加密安全，但太慢，不适合加密整站流量；对称加密快，但双方怎么安全地约定同一把密钥？在网上直接传就会被人截获。</p>
+      <p><span class="label">解法</span>用<b>非对称加密只传那一小段密钥</b>（几 KB，慢也无所谓），然后用这把对称密钥加密之后所有数据（几十 MB，必须快）。这就是 TLS 握手的核心思想，也是"混合加密"的由来。</p>
+      <p><span class="label">举一反三</span>这种"用重武器解决小问题，用小武器解决大问题"的思路在工程中非常常见：用数据库事务保证关键的余额变更，用消息队列处理海量的日志写入。</p>
+    </div>
+
+    <div class="diagram">
+      <div class="diagram__cap">TLS 握手（简化版，理解流程即可）</div>
+      <pre>客户端                                                  服务端
+   │                                                       │
+   │ ① ClientHello：我支持这些加密算法、这是我的随机数A      │
+   ├──────────────────────────────────────────────────────→
+   │                                                       │
+   │ ② ServerHello：选这个算法、这是我的随机数B              │
+   │    证书（含公钥、域名、有效期）                          │
+   │    数字签名（由 CA 的私钥签发）           ←─────────────┤
+   │←──────────────────────────────────────────────────────┤
+   │                                                       │
+   │ ③ 客户端校验证书：                                      │
+   │    · 域名是否匹配？                                      │
+   │    · 是否在有效期内？                                    │
+   │    · 签发它的 CA 是否在系统信任列表里？  ← 关键！           │
+   │    · 用 CA 的公钥验签，确认证书没被伪造                    │
+   │    校验通过后，用证书里的公钥加密"随机数C"发过去 →         │
+   ├──────────────────────────────────────────────────────→
+   │                                                       │
+   │ ④ 双方各自用 随机数A + 随机数B + 随机数C 算出同一把对称密钥 │
+   │    （密钥从未在网络上明文传输过）                          │
+   │                                                       │
+   │ ⑤ 之后所有数据用这把对称密钥加密传输                       │
+   │←───────────────── 加密的 HTTP 报文 ───────────────────→</pre>
+    </div>
+
+    <div class="callout callout--warn">
+      <span class="callout__ico">🔎</span>
+      <div>
+        <strong>为什么"忽略证书警告"是危险的</strong>
+        <p>证书链的信任来源是<b>操作系统/浏览器内置的受信任 CA 列表</b>。如果证书是自签的或签发者不在列表里，浏览器无法确认对方身份。
+        你在公共 WiFi 下点了"继续访问"，就等于同意和一个未知中间人通信 —— 这正是中间人攻击最常用的入口。生产环境的正确做法是申请免费证书（Let's Encrypt），而不是让用户无视警告。</p>
+      </div>
+    </div>
+
+    <div class="concept">
+      <h3 class="concept__t">证书链与 CA<em>Certificate Authority</em></h3>
+      <p><span class="label">定义</span>CA 是受信任的第三方，用自己的私钥给你的公钥"签字"，证明"这把公钥确实属于 example.com"。</p>
+      <p><span class="label">信任链</span>根 CA（内置在系统里）→ 中间 CA → 你的站点证书。校验时逐级往上验签，直到根证书。这就是为什么 Nginx 配置必须用 <code>fullchain.pem</code>（含中间证书）—— 少了中间证书，部分设备就无法完成信任链拼接。</p>
+      <p><span class="label">推论</span>如果某个根 CA 被攻破，全球该 CA 签发的所有证书都会失效。所以历史上出现过 CA 被吊销、浏览器紧急更新的安全事件。</p>
+    </div>
+
+    <div class="accordion">
+      <details>
+        <summary>常见误解：HTTPS 会拖慢网站</summary>
+        <div class="acc-body">
+          <p>握手确实增加了一次往返（TLS 1.3 已优化到 1-RTT，复用会话可 0-RTT），但数据加密本身在现代 CPU 上有 AES-NI 硬件加速，开销很小。
+          而 HTTP/2、HTTP/3 带来的多路复用收益通常远大于握手的成本 —— 实测中启用 HTTPS + HTTP/2 的页面往往<b>更快</b>。</p>
+        </div>
+      </details>
+      <details>
+        <summary>常见误解：有了 HTTPS 网站就安全了</summary>
+        <div class="acc-body">
+          <p>HTTPS 只保护<b>传输过程</b>。它不能防 SQL 注入、不能防越权访问、不能防服务器被入侵、也不能阻止服务端自己把数据泄露出去。
+          它解决的是"路上安全"，不是"屋里安全"。两者缺一不可。</p>
+        </div>
+      </details>
+      <details>
+        <summary>常见误解：证书要花钱买</summary>
+        <div class="acc-body">
+          <p>Let's Encrypt 从 2015 年起提供免费 DV 证书，自动化签发与续期，覆盖了绝大多数场景。付费证书的差异主要在保修金额、组织信息（OV/EV）和商业支持上，对普通项目没有实际收益。</p>
+        </div>
+      </details>
+    </div>
+
+    <h2 id="data">五、数据、编码与序列化</h2>
+
+    <div class="concept">
+      <h3 class="concept__t">字符、码点与编码<em>Character / Code Point / Encoding</em></h3>
+      <p><span class="label">字符集 CharSet</span>一套字符的集合。ASCII 只有 128 个（英文 + 控制符），Unicode 收录了十几万个字符（含全球文字与 emoji）。</p>
+      <p><span class="label">码点 Code Point</span>字符在字符集里的编号。汉字"中"的码点是 U+4E2D。</p>
+      <p><span class="label">编码 Encoding</span>把码点变成字节序列的规则。UTF-8 是最主流的编码：英文 1 字节、汉字 3 字节、emoji 4 字节，且与 ASCII 完全兼容。</p>
+      <p><span class="label">结论</span>现在几乎所有项目都应该统一使用 UTF-8，包括数据库、连接、文件、HTTP 头。<b>只要有一处不是 UTF-8，就会出现"乱码"。</b></p>
+    </div>
+
+    <div class="concept">
+      <h3 class="concept__t">乱码的三种成因</h3>
+      <ul>
+        <li><b>编码不一致</b>：数据以 GBK 写入、以 UTF-8 读取。表现为大量"锟斤拷"或问号。</li>
+        <li><b>编码声明缺失</b>：HTML 没写 <code>meta charset</code>，HTTP 响应头也没写，浏览器只能猜，猜错就乱。</li>
+        <li><b>二次转码</b>：数据被解码成错误的字符后又被重新编码，属于不可逆损坏，只能重新输入。</li>
+      </ul>
+      <p>排查顺序永远是：数据库字符集 → 连接字符集 → 响应头 → HTML meta。用 <code>SHOW VARIABLES LIKE 'character%'</code> 一次看完 MySQL 的四层设置。</p>
+    </div>
+
+    <div class="concept">
+      <h3 class="concept__t">序列化<em>Serialization</em></h3>
+      <p><span class="label">定义</span>把内存里的数据结构（对象、数组）转换成可以在网络上传输或写入磁盘的字节序列；反向过程叫反序列化。</p>
+      <p><span class="label">性质</span>序列化格式的能力与体积是一对矛盾：能力越强（类型、引用、二进制）体积越小但可读性越差；越简单可读（纯文本）体积越大但易调试。</p>
+    </div>
+
+    <div class="table-wrap">
+      <table class="table-key">
+        <thead><tr><th>格式</th><th>类型</th><th>可读性</th><th>体积</th><th>典型场景</th></tr></thead>
+        <tbody>
+          <tr><td>JSON</td><td>文本</td><td>极好</td><td>中</td><td>Web 接口<b>事实标准</b>，浏览器原生支持</td></tr>
+          <tr><td>Form（表单）</td><td>文本</td><td>好</td><td>小</td><td>HTML 表单提交、简单登录</td></tr>
+          <tr><td>XML</td><td>文本</td><td>好（冗长）</td><td>大</td><td>传统企业接口、配置文件、SOAP</td></tr>
+          <tr><td>Protobuf</td><td>二进制</td><td>差（需 schema）</td><td>很小</td><td>服务间高性能通信（gRPC）</td></tr>
+          <tr><td>MessagePack</td><td>二进制</td><td>差</td><td>小</td><td>需要比 JSON 更省带宽的场景</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout callout--info">
+      <span class="callout__ico">🧩</span>
+      <div>
+        <strong>为什么 JSON 赢了</strong>
+        <p>不是因为最快或最小，而是因为<b>浏览器原生就能解析</b>（<code>JSON.parse</code> 比 <code>eval</code> 安全且快）、人类可读、且几乎所有语言都有成熟库。
+        再一次印证：工程上的胜利通常来自"总体成本最低"，而不是"单项指标最好"。</p>
+      </div>
+    </div>
+
+    <div class="concept">
+      <h3 class="concept__t">MIME 类型与 Base64</h3>
+      <p><span class="label">MIME</span>用 <code>类型/子类型</code> 描述内容格式，如 <code>text/html</code>、<code>application/json</code>、<code>image/png</code>。它是"这段字节该怎么解释"的说明书，弄错会导致浏览器下载而不是显示文件。</p>
+      <p><span class="label">Base64</span>把任意二进制数据用 64 个可打印字符表示，体积增大约 33%。因为 HTTP 头、URL、JSON 都是文本环境，无法直接放二进制，所以图片内联、JWT 的 payload、邮件附件都使用 Base64。<b>它只是编码，不是加密</b> —— 任何人都能还原。</p>
+    </div>
+
+    <h2 id="concurrency">六、进程、线程与并发</h2>
+
+    <div class="concept">
+      <h3 class="concept__t">程序 / 进程 / 线程 / 协程</h3>
+      <p><span class="label">程序</span>磁盘上的静态文件，只是一堆指令。</p>
+      <p><span class="label">进程</span>程序的一次运行实例，拥有独立的内存空间。进程之间默认互不可见（安全，但通信成本高）。</p>
+      <p><span class="label">线程</span>进程内的执行单元，<b>共享同一份内存</b>。共享让通信变快，也让"同时改一个变量"成为可能 —— 竞态问题由此而来。</p>
+      <p><span class="label">协程</span>用户态的轻量执行单元，由程序自己调度，切换成本远低于线程。Go 的 goroutine、Python 的 async、JS 的 async/await 本质都是这一层抽象。</p>
+    </div>
+
+    <div class="table-wrap">
+      <table class="table-key">
+        <thead><tr><th>维度</th><th>进程</th><th>线程</th><th>协程</th></tr></thead>
+        <tbody>
+          <tr><td>内存隔离</td><td>完全隔离</td><td>共享</td><td>共享</td></tr>
+          <tr><td>创建开销</td><td>高（毫秒级）</td><td>中（微秒～毫秒）</td><td><b>极低（纳秒级）</b></td></tr>
+          <tr><td>可同时存在数量</td><td>几十～几百</td><td>几百～几千</td><td>几万～几十万</td></tr>
+          <tr><td>切换由谁决定</td><td>操作系统</td><td>操作系统（抢占式）</td><td>程序（协作式）</td></tr>
+          <tr><td>崩溃影响</td><td>只影响自己</td><td>拖垮整个进程</td><td>拖垮整个进程</td></tr>
+          <tr><td>适合</td><td>隔离、独立部署</td><td>CPU 密集计算</td><td>大量 IO 等待</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="concept">
+      <h3 class="concept__t">并发与并行<em>Concurrency vs Parallelism</em></h3>
+      <p><span class="label">并发</span>一种<b>结构</b>：让程序能够同时处理多个任务（交替推进）。单核 CPU 也能并发。</p>
+      <p><span class="label">并行</span>一种<b>物理现实</b>：多个任务在同一时刻真正同时执行，需要多核。</p>
+      <p><span class="label">类比</span>一个厨师同时做三道菜是并发（切菜的间隙去看汤），三个厨师各做一道菜是并行。并发解决的是"等待时间不要浪费"，并行解决的是"算力不够"。</p>
+      <p><span class="label">对 Web 的意义</span>Web 服务绝大多数时间是<b>在等</b>（等数据库、等外部接口），属于 IO 密集。所以最重要的能力是"并发"而不是"并行" —— 这就是 Node.js 单线程也能扛住高并发的原因。</p>
+    </div>
+
+    <h3>同步 / 异步 / 阻塞 / 非阻塞</h3>
+    <p>这四个词经常被混用，但它们描述的是两件不同的事：</p>
+    <div class="table-wrap">
+      <table class="table-key">
+        <thead><tr><th>概念</th><th>描述的问题</th><th>含义</th></tr></thead>
+        <tbody>
+          <tr><td>同步 / 异步</td><td>调用方要不要等结果</td><td>同步：调用后必须等返回；异步：调用后立即继续，结果稍后通过回调/事件通知</td></tr>
+          <tr><td>阻塞 / 非阻塞</td><td>等待期间线程能不能干别的</td><td>阻塞：线程挂起干等；非阻塞：调用立刻返回"还没好"，线程可以去做别的事</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="compare">
+      <div>
+        <h4>同步阻塞（最传统）</h4>
+        <ul>
+          <li>读数据库 → 线程挂起 → 数据回来 → 继续</li>
+          <li>实现简单、逻辑直观</li>
+          <li>一个线程只能服务一个请求，高并发需要大量线程</li>
+          <li>典型：PHP-FPM、Java 传统 Servlet</li>
+        </ul>
+      </div>
+      <div>
+        <h4>异步非阻塞（现代主流）</h4>
+        <ul>
+          <li>发起读 → 立刻返回 → 去处理别的请求 → 数据好了再回调</li>
+          <li>少量线程即可支撑海量连接</li>
+          <li>代码需要 async/await 才易读，调试稍难</li>
+          <li>典型：Node.js、Go、Nginx、Python asyncio</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="diagram">
+      <div class="diagram__cap">事件循环（Event Loop）的工作原理</div>
+      <pre>   ┌──────────────────────────────────────────────┐
+   │                                              │
+   ▼                                              │
+[ 1. 取出待执行的回调 ]                            │
+   │        ↑                                      │
+   │     （没有任务就等待）                          │
+   ▼                                              │
+[ 2. 执行回调，直到当前任务完成 ]                    │
+   │  这一步是"单线程"的：任何同步代码都会卡住整个循环   │
+   ▼                                              │
+[ 3. 执行所有微任务（Promise.then / queueMicrotask）]│
+   │  ← 微任务队列会在本轮清空，且优先级高于宏任务      │
+   ▼                                              │
+[ 4. 交给系统内核处理 IO（请求数据库/文件/网络）]      │
+   │  这一步不占用 JS 线程                          │
+   ▼                                              │
+[ 5. 把已完成的 IO 回调排进队列 ]─────────────────────┘
+
+由此可推出两条极其重要的实践结论：
+  · 不要在请求处理里写 CPU 密集的同步代码（大循环、大 JSON 解析、图片处理）
+    → 它会阻塞整个进程，导致所有其他请求全部卡住
+  · 单进程只能用一个 CPU 核心
+    → 要用满多核必须起多个进程（PM2 cluster / 多容器 / Go 的 GOMAXPROCS）</pre>
+    </div>
+
+    <div class="concept">
+      <h3 class="concept__t">竞态条件<em>Race Condition</em></h3>
+      <p><span class="label">定义</span>多个执行单元以不可预期的顺序访问共享数据，导致结果依赖于"谁先谁后"。典型是"查库存 → 判断 → 扣减"三步之间被插入另一个请求。</p>
+      <p><span class="label">性质</span>它的可怕之处在于：<b>测试环境几乎永远复现不出来</b>，只在压力大、并发高时偶发。所以不能靠"多测几次"，必须从机制上消除。</p>
+      <p><span class="label">消除手段</span>① 让判断与更新在一条原子语句里完成（<code>UPDATE ... WHERE stock &gt;= n</code>）；② 加锁（数据库行锁 / 分布式锁）；③ 乐观锁版本号；④ 用队列把并发请求串行化。</p>
+    </div>
+
+    <div class="concept">
+      <h3 class="concept__t">死锁<em>Deadlock</em></h3>
+      <p><span class="label">定义</span>两个或更多执行单元互相持有对方需要的资源，且都不释放，导致永久等待。A 拿了锁 1 等锁 2，B 拿了锁 2 等锁 1。</p>
+      <p><span class="label">预防</span>① 约定加锁顺序（大家都按 id 从小到大加锁）；② 设置锁等待超时（超时即失败重试）；③ 缩小锁范围、缩短事务时长。数据库通常能自动检测死锁并回滚其中一个事务，所以你的代码要能正确处理"被数据库回滚"这种失败并重试。</p>
+    </div>
+
+    <div class="concept">
+      <h3 class="concept__t">CPU 密集 vs IO 密集 —— 一个决定选型的判断</h3>
+      <p><span class="label">CPU 密集</span>任务时间主要花在计算上（加密、图像压缩、大数运算、报表统计）。优化方向：多进程/多线程、用更快的语言、做缓存避免重复计算。</p>
+      <p><span class="label">IO 密集</span>任务时间主要花在等待上（查库、调接口、读写文件）。优化方向：异步、连接池、并发请求、加缓存减少 IO 次数。</p>
+      <p><span class="label">为什么这是最重要的判断</span>它直接解释了前一篇的选型结论：Node.js / Python 适合 IO 密集（异步模型优秀），Java / Go 在 CPU 密集与高并发下更稳，Rust 在有极致性能要求时才有价值。<b>先判断自己的任务性质，再选工具，而不是反过来。</b></p>
+    </div>
+
+    <div class="callout callout--warn">
+      <span class="callout__ico">🧠</span>
+      <div>
+        <strong>关于 GIL 这个高频面试概念</strong>
+        <p>CPython 有全局解释器锁（GIL），同一进程内同一时刻只有一个线程能执行 Python 字节码。这导致 <b>Python 多线程无法并行做 CPU 密集任务</b>。
+        但它<b>不影响 IO 密集场景</b>：线程在做 IO 时会释放 GIL，所以多线程爬虫、多线程调接口依然有效。需要真并行时用多进程（<code>multiprocessing</code>）或原生扩展。</p>
+      </div>
+    </div>
+
+    <h2 id="state">七、状态与身份识别</h2>
+
+    <div class="concept">
+      <h3 class="concept__t">有状态与无状态：为什么它决定架构</h3>
+      <p><span class="label">有状态服务</span>服务端保存了与某个客户端相关的会话数据（比如内存里的 session）。后果：<b>同一个用户的后续请求必须打到同一台机器</b>，否则状态找不到。</p>
+      <p><span class="label">无状态服务</span>每个请求自带全部所需信息。后果：任意实例都能处理任意请求，可以随意增加、删除、重启实例。</p>
+    </div>
+
+    <div class="diagram">
+      <div class="diagram__cap">状态放在哪里，决定了能不能水平扩展</div>
+      <pre>【有状态：状态存在应用内存里，无法随意扩容】
+   用户 ──→ 负载均衡 ──→ 实例A（内存里有 session）
+                 └──→ 实例B（内存里没有 session）← 用户被分到这里就掉登录
+   要让 A 和 B 一致，只能做"会话粘滞"或进程间同步 → 扩容变得很麻烦
+
+【无状态：状态外置到共享存储】
+   用户 ──→ 负载均衡 ──┬──→ 实例A ┐
+                      ├──→ 实例B ├──→ Redis / 数据库（唯一的真相来源）
+                      └──→ 实例C ┘
+   实例可以随便加，甚至随时被杀死重建，用户毫无感知
+   ← 这就是"把状态赶到边界之外"这一架构原则的具体体现</pre>
+    </div>
+
+    <h3>Cookie / Session / Token / JWT 的关系</h3>
+    <div class="table-wrap">
+      <table class="table-key">
+        <thead><tr><th>概念</th><th>它是什么</th><th>存在哪</th><th>关键性质</th></tr></thead>
+        <tbody>
+          <tr><td>Cookie</td><td>浏览器提供的一种存储与自动携带机制</td><td>浏览器（会在请求时自动带上）</td><td>只是一个"容器"，不规定里面装什么</td></tr>
+          <tr><td>Session</td><td>服务端保存的会话数据</td><td>服务端（内存 / Redis / 数据库）</td><td>浏览器只拿一个无意义的 sessionId，可随时在服务端吊销</td></tr>
+          <tr><td>Token</td><td>一张代表身份的凭证（内容自定）</td><td>客户端（内存 / localStorage）</td><td>需要前端显式放进请求头，不自动携带</td></tr>
+          <tr><td>JWT</td><td>一种特定格式的 Token（头部.载荷.签名）</td><td>客户端</td><td><b>自包含</b>：服务端验签即可确认身份，无需查库 → 无状态</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout callout--info">
+      <span class="callout__ico">🔍</span>
+      <div>
+        <strong>选择的标准：你要不要"主动踢人下线"</strong>
+        <p>JWT 的载荷是 Base64 编码的明文，服务端不存储，所以<b>签发后在过期前无法撤销</b>。如果你的业务需要"管理员强制下线""改密码后立即失效所有设备"，纯 JWT 就做不到，只能：
+        ① 用 Redis 维护黑名单（那就变成有状态了）；② 用短有效期 accessToken + 可撤销的 refreshToken；③ 回到 Session。
+        <b>没有更优，只有取舍。</b></p>
+      </div>
+    </div>
+
+    <h3>浏览器存储方式对比</h3>
+    <div class="table-wrap">
+      <table class="table-key">
+        <thead><tr><th>方式</th><th>容量</th><th>生命周期</th><th>会随请求发送吗</th><th>能否被 JS 读取</th></tr></thead>
+        <tbody>
+          <tr><td>Cookie</td><td>约 4KB</td><td>可设置过期时间</td><td><b>会（自动）</b></td><td>取决于 HttpOnly</td></tr>
+          <tr><td>localStorage</td><td>约 5MB</td><td>永久，除非手动清除</td><td>不会</td><td>能</td></tr>
+          <tr><td>sessionStorage</td><td>约 5MB</td><td>关闭标签页即清空</td><td>不会</td><td>能</td></tr>
+          <tr><td>IndexedDB</td><td>几百 MB～GB</td><td>永久</td><td>不会</td><td>能（异步 API）</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="muted">
+      一个重要的安全推论：<b>放在 localStorage 的 Token 一旦网站存在 XSS 漏洞就会被直接偷走</b>；
+      放在 <code>HttpOnly</code> Cookie 里的凭证 JS 读不到，但又要面对 CSRF 风险（需要 SameSite 缓解）。
+      两种方案各有软肋，这也是"没有绝对安全的存储"这一事实的体现。
+    </p>
+
+    <h2 id="rendering">八、页面是怎么生成的</h2>
+    <p>
+      同一个页面，可以在服务器上生成 HTML 后发给浏览器，也可以在浏览器里用 JS 现场拼出来。
+      这个选择叫<b>渲染模式</b>，它直接影响首屏速度、SEO 和服务器成本。
+    </p>
+
+    <div class="diagram">
+      <div class="diagram__cap">四种渲染模式的数据流</div>
+      <pre>【CSR 客户端渲染】浏览器先下载空壳，再靠 JS 拉数据渲染
+浏览器 ──请求──→ 服务器 ──返回几乎空白的 HTML + 大体积 JS──→ 浏览器
+       └─ JS 下载执行 ─→ 发起接口请求 ─→ 拿到数据 ─→ 渲染出内容
+       缺点：首屏慢（白屏）、SEO 差；优点：后续跳转极快，服务器压力最小
+
+【SSR 服务端渲染】每次请求都在服务器上现场拼好 HTML
+浏览器 ──请求──→ 服务器 ─(查数据 + 渲染HTML)─→ 返回完整 HTML
+       └─ 浏览器直接显示 ─→ JS 下载后"接管"页面（水合）
+       优点：首屏快、SEO 好；缺点：服务器每次都要渲染，压力大
+
+【SSG 静态生成】构建时就把 HTML 生成好，当作静态文件托管
+构建阶段 ─(渲染所有页面)─→ 一堆 HTML 文件 ─→ CDN
+       └─ 用户访问时等同于访问静态文件（极快、几乎零成本）
+       缺点：内容更新需要重新构建；适合博客、文档、官网
+
+【ISR 增量再生】SSG 的升级：静态文件按需/定时重新生成
+       └─ 用户访问到过期页面时，后台重新生成，先返回旧版本
+       优点：兼顾静态的速度与内容的时效性</pre>
+    </div>
+
+    <div class="table-wrap">
+      <table class="table-key">
+        <thead><tr><th>模式</th><th>首屏速度</th><th>SEO</th><th>服务器成本</th><th>适用</th></tr></thead>
+        <tbody>
+          <tr><td>CSR</td><td>慢（白屏）</td><td>差</td><td>最低</td><td>登录后的内部系统、后台管理</td></tr>
+          <tr><td>SSR</td><td><b>快</b></td><td><b>好</b></td><td>高</td><td>电商、内容平台、需要 SEO 的公开页面</td></tr>
+          <tr><td>SSG</td><td><b>最快</b></td><td><b>好</b></td><td><b>最低</b></td><td>博客、文档、营销页</td></tr>
+          <tr><td>ISR</td><td><b>最快</b></td><td><b>好</b></td><td>低</td><td>内容定期更新但不需要实时</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="concept">
+      <h3 class="concept__t">水合<em>Hydration</em></h3>
+      <p><span class="label">定义</span>服务端渲染出的 HTML 只是"死"的静态画面，没有事件响应能力。浏览器下载并执行 JS 后，把事件监听、状态挂到这些已有 DOM 上，让它"活"过来 —— 这个过程叫水合。</p>
+      <p><span class="label">为什么重要</span>它解释了 SSR 页面"看起来已经出来了但点不动"的现象。水合需要下载并执行全部 JS，因此是 SSR 性能的主要瓶颈，也催生了岛屿架构（Islands）、流式渲染、部分水合等优化方案。</p>
+    </div>
+
+    <div class="callout callout--tip">
+      <span class="callout__ico">🧭</span>
+      <div>
+        <strong>怎么选：先问"谁需要看到这个页面的内容"</strong>
+        <p>需要被搜索引擎收录、需要首屏就是完整内容 → SSR 或 SSG。<br>
+        登录后才可见、不需要 SEO、交互复杂 → CSR 最省事。<br>
+        内容不常变（文档、官网）→ SSG，性能与成本都最优。<br>
+        <b>不要一开始就上最复杂的方案</b>：很多项目的正确答案是"营销页静态生成 + 应用页客户端渲染"的混合。</p>
+      </div>
+    </div>
+
+    <h2 id="abstraction">九、分层、抽象与耦合</h2>
+
+    <div class="concept">
+      <h3 class="concept__t">抽象<em>Abstraction</em></h3>
+      <p><span class="label">定义</span>隐藏实现细节，只暴露必要的接口。你调用 <code>db.query()</code> 时并不需要知道磁盘怎么寻道。</p>
+      <p><span class="label">性质</span>抽象<b>简化了使用，但增加了理解成本</b>。好的抽象让人不必关心下层；坏的抽象让人不得不"穿透"去看下层到底干了什么 —— 后者在工程里极为常见（比如 ORM 生成了意料之外的 SQL）。</p>
+      <p><span class="label">判断标准</span>如果一个抽象让 90% 的场景变简单、10% 的场景变复杂且难以理解，它就是坏抽象。<b>抽象的成本是永久的，收益必须足够普遍。</b></p>
+    </div>
+
+    <div class="concept">
+      <h3 class="concept__t">耦合与内聚<em>Coupling / Cohesion</em></h3>
+      <p><span class="label">耦合</span>模块之间依赖的紧密程度。耦合越高，改一个模块越容易牵连其他模块。目标是<b>低耦合</b>。</p>
+      <p><span class="label">内聚</span>一个模块内部各元素的相关程度。内聚越高，模块职责越单一、越好理解。目标是<b>高内聚</b>。</p>
+      <p><span class="label">一句话</span>"高内聚、低耦合"意味着：相关的东西放在一起，不相关的东西不要互相知道。这两个词是评价任何代码组织方式（分层、组件化、微服务）的通用标尺。</p>
+    </div>
+
+    <div class="diagram">
+      <div class="diagram__cap">"随意调用"与"分层"的差别</div>
+      <pre>【随意调用：任何代码都能直接碰数据库】
+   控制器A ──┐
+   控制器B ──┼──→ 数据库
+   定时任务 ──┘
+   ← 一旦表结构变更，所有调用点都要改
+   ← 权限校验、审计日志、缓存逻辑要在每个调用点重复写一遍
+
+【分层：所有访问收敛到一层】
+   控制器A ──┐
+   控制器B ──┼──→ 服务层（业务规则/事务/权限）──→ 数据访问层 ──→ 数据库
+   定时任务 ──┘                ↑
+                          缓存、日志、校验都收在这里的少数位置
+   ← 表结构变更只需改数据访问层
+   ← 换个数据库只改最后一层
+   ← 代价：多了一层函数调用、多了一层需要理解的概念</pre>
+    </div>
+
+    <div class="concept">
+      <h3 class="concept__t">分层的代价</h3>
+      <ul>
+        <li><b>性能开销</b>：每多一层就多一次调用与转换，极端情况下层次过多会让延迟翻倍。</li>
+        <li><b>认知开销</b>：新人要理解五层目录才能改一个小功能。</li>
+        <li><b>容易出现"贫血层"</b>：某些层只是把参数原样透传，没有实际职责，属于无效抽象。</li>
+      </ul>
+      <p>所以"层数"不是越多越好。<b>正确的判断是：这一层是否承载了独立的职责，且这个职责是否只在这一处被实现。</b>如果两个层做的事完全一样，就合并。</p>
+    </div>
+
+    <div class="concept">
+      <h3 class="concept__t">架构的本质<em>Architecture</em></h3>
+      <p><span class="label">定义</span>架构是关于"系统由哪些部分组成、部分之间如何交互、以及为什么这样选"的一系列<b>难以更改的决策</b>。</p>
+      <p><span class="label">性质</span>① 架构是取舍，不是标准答案 —— 每个选择都在换得某些性质的同时放弃另一些（简单换灵活、性能换成本、一致换可用）；② 架构服务于约束（团队人数、预算、时间、既有技术栈），脱离约束谈架构是空谈；③ 架构会随时间演进，不要一次设计到三年后。</p>
+      <p><span class="label">最实用的产出</span>一份<b>架构决策记录</b>（ADR）：每做一个重要选择，用半页纸写下"背景 / 方案 / 决定 / 后果"。这是团队里性价比最高的文档 —— 半年后没人记得为什么当初不用微服务，但文档记得。</p>
+    </div>
+
+    <div class="callout callout--warn">
+      <span class="callout__ico">🚧</span>
+      <div>
+        <strong>关于"架构"最常见的误解</strong>
+        <p>误解一：架构 = 用高级技术。实际上最简单的单体 + 一个数据库，往往是当前阶段最优的架构。<br>
+        误解二：架构要一次设计好。实际上过度前瞻设计的部分通常都没用上，还成了负担。<br>
+        误解三：架构是架构师的事。实际上每写一个函数都在做架构决策（放哪一层、依赖谁），只是粒度不同。</p>
+      </div>
+    </div>
+
+    <h2 id="cap">十、一致性、可用性与扩展性</h2>
+
+    <div class="concept">
+      <h3 class="concept__t">一致性<em>Consistency</em></h3>
+      <p><span class="label">定义</span>多个副本 / 多个节点上的数据，在某个时刻看起来是否相同、是否符合预期。</p>
+      <p><span class="label">一致性光谱</span>
+      <b>强一致性</b>：任何时刻读到的都是最新值（代价：必须等所有副本确认，慢且怕故障）；
+      <b>弱一致性</b>：不保证读到最新值，只保证最终会一致；
+      <b>最终一致性</b>：短暂不一致可接受，但一段时间后一定会收敛。</p>
+      <p><span class="label">举例</span>发朋友圈：自己立刻看到（本地先渲染），别人几秒后才看到 —— 这就是最终一致性在用户体验上的成功应用。而查账户余额必须强一致：显示 100 元却取不出 100 元是不可接受的。</p>
+    </div>
+
+    <div class="diagram">
+      <div class="diagram__cap">CAP 定理：分布式系统的三选二困境</div>
+      <pre>                      一致性 C
+                    （Consistency）
+                        ╱╲
+                       ╱  ╲
+                      ╱    ╲
+                     ╱  取舍 ╲
+                    ╱   只能  ╲
+                   ╱   取两个  ╲
+                  ╱____________╲
+          可用性 A               分区容错性 P
+       （Availability）      （Partition tolerance）
+
+关键理解（很多人在这里理解错了）：
+  P（分区容错）不是"可选项" —— 只要系统跨网络部署，网络故障必然发生，
+  所以 P 必须接受。真正的选择是在 C 和 A 之间：
+
+  · 选 CP：网络分区时，宁可让部分请求失败，也不返回不一致的数据
+           → 典型：银行转账、库存扣减、分布式锁（如 etcd、ZooKeeper）
+
+  · 选 AP：网络分区时，宁可返回旧数据，也要保证服务可用
+           → 典型：信息流、点赞数、购物车展示（如 Cassandra、DNS）
+
+现实中的系统通常是"混合"的：同一个应用里，支付走 CP，推荐走 AP。</pre>
+    </div>
+
+    <div class="concept">
+      <h3 class="concept__t">BASE<em>Basically Available, Soft state, Eventually consistent</em></h3>
+      <p><span class="label">定义</span>对 CAP 中 AP 路线的工程化总结：<b>基本可用</b>（允许降级但不停服）、<b>软状态</b>（允许中间态存在）、<b>最终一致</b>（最终收敛即可）。</p>
+      <p><span class="label">相对 ACID</span>ACID 追求强一致与即时正确，适合单库事务；BASE 追求可用与扩展，适合跨服务的分布式场景。两者的选择标准是：<b>这笔数据算错会不会造成不可挽回的损失</b>。会，就用 ACID；不会，就可以用 BASE 换性能与可用性。</p>
+    </div>
+
+    <div class="concept">
+      <h3 class="concept__t">可用性的度量</h3>
+      <p><span class="label">几个九</span>可用性 = 可用时间 ÷ 总时间。99.9% 意味着每月最多允许 43 分钟不可用。</p>
+      <p><span class="label">关键性质</span>可用性靠<b>冗余</b>换来的：单机永远做不到四个九，因为硬件必然故障。多副本、多可用区、故障自动转移是达到高可用的唯一途径 —— 而冗余意味着成本翻倍，所以要先算清"停机一分钟损失多少钱"，再决定投多少冗余。</p>
+      <p><span class="label">链式放大</span>如果页面依赖 5 个服务，每个服务可用性 99.9%，串联后的整体可用性约为 99.5%（每月多出 3 小时不可用）。<b>依赖越多，整体越脆弱</b> —— 这是"减少依赖与调用链长度"这条架构原则的数学依据。</p>
+    </div>
+
+    <div class="compare">
+      <div>
+        <h4>垂直扩展（Scale Up）</h4>
+        <ul>
+          <li>给机器加 CPU、加内存、换更快的磁盘</li>
+          <li>实现最简单，代码零改动</li>
+          <li>有物理上限，价格非线性上涨</li>
+          <li>仍是单点，宕机就是全站宕机</li>
+          <li>适合：起步阶段、有状态服务（数据库）</li>
+        </ul>
+      </div>
+      <div>
+        <h4>水平扩展（Scale Out）</h4>
+        <ul>
+          <li>增加更多机器，共同分担流量</li>
+          <li>理论上无上限，成本线性</li>
+          <li><b>前提是服务必须无状态</b></li>
+          <li>需要负载均衡、会话外置、部署自动化</li>
+          <li>适合：无状态的应用服务层</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="concept">
+      <h3 class="concept__t">瓶颈与木桶效应</h3>
+      <p><span class="label">定义</span>系统的整体性能取决于最慢的那个环节。数据库 1 秒、应用 50 毫秒、网络 30 毫秒，整体响应就是 1 秒出头。</p>
+      <p><span class="label">实践含义</span>优化必须找当前瓶颈，优化非瓶颈毫无收益。这也是为什么"先测量再优化"不是口号：花一周优化了 30 毫秒的网络，而数据库慢查询占了 900 毫秒，等于白干。</p>
+      <p><span class="label">扩容的次序</span>先优化 SQL 与索引 → 加缓存 → 应用多实例 → 读写分离 → 分库分表。每一步都比下一步便宜一个数量级，而绝大多数项目在前两步就够用了。</p>
+    </div>
+
+    <div class="callout callout--tip">
+      <span class="callout__ico">🎯</span>
+      <div>
+        <strong>原理篇的核心一句话</strong>
+        <p>Web 开发里所有的"最佳实践"，都可以从本篇的原理推导出来：
+        因为 HTTP 无状态 → 需要 Cookie/Token；
+        因为网络必然分区 → 必须做冗余与降级；
+        因为 IO 密集 → 异步优于多线程；
+        因为抽象有成本 → 层数要克制；
+        因为资源有限 → 一切优化都要先测量。
+        <b>记住原理，就不需要背结论。</b></p>
+      </div>
+    </div>
+
+    <div class="pager">
+      <a class="prev" href="../index.html"><span>返回</span><b>← 教程首页</b></a>
+      <a class="next" href="glossary.html"><span>配套查阅</span><b>专业术语词典 →</b></a>
+    </div>
+  </main>
+
+  <aside class="toc" aria-label="本页目录"></aside>
+</div>
+
+<div class="mask"></div>
+
+<footer class="footer">
+  <div class="footer__grid">
+    <div>
+      <h5>原理篇</h5>
+      <ul>
+        <li><a href="concepts.html">原理与概念</a></li>
+        <li><a href="glossary.html">专业术语词典</a></li>
+      </ul>
+    </div>
+    <div>
+      <h5>基础 / 工程</h5>
+      <ul>
+        <li><a href="frontend.html">前端基础</a></li>
+        <li><a href="languages.html">后端语言选型</a></li>
+        <li><a href="architecture.html">搭建思路</a></li>
+        <li><a href="deployment.html">部署思路</a></li>
+        <li><a href="ops.html">运维思路</a></li>
+      </ul>
+    </div>
+    <div>
+      <h5>本页速查</h5>
+      <ul>
+        <li><a href="#network">网络分层模型</a></li>
+        <li><a href="#http">HTTP 方法与状态码</a></li>
+        <li><a href="#concurrency">进程线程并发</a></li>
+        <li><a href="#cap">CAP 定理</a></li>
+      </ul>
+    </div>
+    <div>
+      <h5>关于</h5>
+      <ul>
+        <li><a href="../index.html#principles">六条核心原则</a></li>
+        <li><a href="../index.html#faq">常见问题</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="footer__bottom">
+    <span>网站开发基础教程 · 原理与概念</span>
+    <span>虚线下划线的词可悬停查看解释</span>
+  </div>
+</footer>
+
+<script src="../assets/js/main.js"></script>
+</body>
+</html>

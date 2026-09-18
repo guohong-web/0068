@@ -1,0 +1,869 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>部署思路 · 网站开发基础教程</title>
+<meta name="description" content="网站部署完整思路：域名与 DNS、服务器初始化、Nginx 反向代理、HTTPS 证书、Docker 容器化、GitHub Actions 自动化部署与回滚。">
+<link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body data-root="../">
+<div id="progress"></div>
+
+<header class="topbar">
+  <button class="topbar__burger" type="button" aria-label="打开导航">☰</button>
+  <a class="brand" href="../index.html">
+    <span class="brand__logo">W</span>
+    <span>网站开发基础教程</span>
+    <span class="brand__sub">Web Dev Handbook</span>
+  </a>
+  <div class="topbar__spacer"></div>
+  <nav class="topbar__nav">
+    <a href="../index.html">首页</a>
+    <a href="concepts.html">原理</a>
+    <a href="frontend.html">前端</a>
+    <a href="languages.html">后端</a>
+    <a href="architecture.html">搭建</a>
+    <a class="is-active" href="deployment.html">部署</a>
+    <a href="ops.html">运维</a>
+  </nav>
+  <button class="icon-btn" id="themeBtn" type="button" aria-label="切换主题">☾</button>
+</header>
+
+<div class="layout">
+  <aside class="sidebar" aria-label="章节导航"></aside>
+
+  <main class="content">
+    <span class="eyebrow">④ 工程篇</span>
+    <h1>部署思路</h1>
+    <p class="lede">
+      部署的本质是：<b>把一份确定版本的代码，以可重复的方式放到一台公网机器上，并让它持续对外提供服务</b>。
+      关键词是"可重复" —— 如果第二次部署需要回忆上次敲过哪些命令，那就不叫部署，叫碰运气。
+    </p>
+
+    <div class="callout callout--info">
+      <span class="callout__ico">🧠</span>
+      <div>
+        <strong>先理解这几层在做什么</strong>
+        <p>部署不是"把文件传上去"，而是<b>在一条链路上依次配置好几层基础设施</b>：DNS 负责把域名指向机器、TLS 负责加密与身份、Nginx 负责入口与转发、容器负责运行环境一致。
+        概念基础见原理篇的<a href="concepts.html#network">网络分层</a>与 <a href="concepts.html#https">HTTPS 与加密</a>；
+        名词（反向代理、CDN、回源、不可变基础设施、CI/CD、金丝雀发布）见术语词典的<a href="glossary.html#g-deploy">部署与运维</a>分类。</p>
+      </div>
+    </div>
+
+    <div class="callout callout--info">
+      <span class="callout__ico">🧭</span>
+      <div>
+        <strong>本章路线</strong>
+        <p>域名 → 服务器 → 运行时 → Nginx → HTTPS → Docker → 自动化 → 回滚。建议按顺序实操一遍，全程大约需要 3～6 小时。</p>
+      </div>
+    </div>
+
+    <h2 id="overview">一、先看清全貌</h2>
+    <p>用户在浏览器输入 <code>https://app.example.com</code> 之后，数据经过的每一跳都是你需要配置的东西。</p>
+
+    <div class="flow">
+      <span class="on">浏览器</span><i>→</i>
+      <span>DNS 解析</span><i>→</i>
+      <span>CDN（可选）</span><i>→</i>
+      <span>TLS 终止</span><i>→</i>
+      <span>Nginx:443</span><i>→</i>
+      <span>应用容器:3000</span><i>→</i>
+      <span>数据库</span>
+    </div>
+
+    <div class="table-wrap">
+      <table class="table-key">
+        <thead><tr><th>环节</th><th>你要做的事</th><th>搞错会怎样</th></tr></thead>
+        <tbody>
+          <tr><td>域名</td><td>购买 + 实名认证 + 备案（境内服务器）</td><td>未备案域名指向境内服务器会被拦截</td></tr>
+          <tr><td>DNS 解析</td><td>添加 A 记录指向服务器公网 IP</td><td>域名打不开，或指到了旧机器</td></tr>
+          <tr><td>安全组 / 防火墙</td><td>只开放 80、443、22</td><td>开太多端口等于把数据库暴露给全网</td></tr>
+          <tr><td>运行时</td><td>安装语言环境或用容器镜像</td><td>版本不一致导致构建失败</td></tr>
+          <tr><td>进程守护</td><td>systemd / PM2 / Docker restart 策略</td><td>进程崩溃后不会自动拉起</td></tr>
+          <tr><td>Nginx</td><td>监听 443，转发到应用端口</td><td>应用直接暴露，没有 TLS、没有压缩</td></tr>
+          <tr><td>HTTPS 证书</td><td>签发 + 自动续期</td><td>浏览器报警告；证书过期导致全站打不开</td></tr>
+          <tr><td>自动化</td><td>CI/CD 脚本</td><td>每次部署靠手敲，迟早出事故</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2 id="domain">二、域名与 DNS</h2>
+
+    <h3>买域名</h3>
+    <ul class="plain-list">
+      <li><span class="k">后缀选择</span><span><code>.com</code> 认知度最高；<code>.cn</code> / <code>.com.cn</code> 需实名；<code>.dev</code> 强制 HTTPS（自带 HSTS 预加载）</span></li>
+      <li><span class="k">备案</span><span>服务器在中国大陆必须完成 ICP 备案，通常需 7～20 个工作日。<b>用境外或港澳台服务器可免备案</b>，但访问延迟会增加</span></li>
+      <li><span class="k">费用</span><span>首年常有优惠，注意<b>续费价格</b>通常是首年的 3～5 倍</span></li>
+      <li><span class="k">安全</span><span>开启域名锁定（Transfer Lock）、开启 DNSSEC（可选）</span></li>
+    </ul>
+
+    <h3>配置解析</h3>
+    <div class="table-wrap">
+      <table class="table-key">
+        <thead><tr><th>类型</th><th>名称</th><th>值</th><th>用途</th></tr></thead>
+        <tbody>
+          <tr><td>A</td><td><code>@</code></td><td>服务器公网 IP</td><td>主域名 example.com</td></tr>
+          <tr><td>A</td><td><code>www</code></td><td>同一 IP</td><td>www.example.com</td></tr>
+          <tr><td>A</td><td><code>api</code></td><td>后端服务器 IP</td><td>前后端分离时给接口单独域名</td></tr>
+          <tr><td>CNAME</td><td><code>app</code></td><td>托管平台给的域名</td><td>指向 Vercel / CDN 等</td></tr>
+          <tr><td>TXT</td><td><code>@</code></td><td>验证字符串</td><td>证书签发、DNS 归属验证</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="code">
+      <div class="code__head"><span class="code__dots"><i></i><i></i><i></i></span><span class="code__lang">Bash · 验证解析是否生效</span></div>
+      <pre><code># 用公共 DNS 查询，确认返回的是你的服务器 IP
+dig +short example.com @8.8.8.8
+nslookup example.com 1.1.1.1
+
+# 查看完整解析链（是否存在 CNAME、TTL 多少）
+dig example.com ANY +noall +answer
+
+# 判断是 DNS 问题还是服务器问题：直接用 IP 访问
+curl -H 'Host: example.com' http://123.45.67.89/healthz
+
+# TTL 生效时间：修改解析后最长需要等待原 TTL（常见 600 秒）</code></pre>
+    </div>
+
+    <div class="callout callout--warn">
+      <span class="callout__ico">⏱️</span>
+      <div>
+        <strong>切换服务器时的正确姿势</strong>
+        <p>不要直接改 A 记录 —— 老用户会因为 DNS 缓存继续访问旧机器。
+        正确做法：<b>先把 TTL 改小（如 60 秒）</b>，等一天让缓存过期，再切 IP，观察新旧机器都正常后，撤回 TTL。这样切换几乎无感知。</p>
+      </div>
+    </div>
+
+    <h2 id="server">三、服务器选购与初始化</h2>
+
+    <h3>选什么配置</h3>
+    <div class="table-wrap">
+      <table class="table-key">
+        <thead><tr><th>场景</th><th>建议配置</th><th>说明</th></tr></thead>
+        <tbody>
+          <tr><td>学习 / 个人项目</td><td>1 核 2G</td><td>够跑 Nginx + Node + Redis + MySQL（MySQL 较吃内存）</td></tr>
+          <tr><td>小团队生产</td><td>2 核 4G</td><td>数据库独立或加 swap，能扛住日常流量</td></tr>
+          <tr><td>有并发压力</td><td>4 核 8G + 独立数据库</td><td>数据库独立部署，应用可水平扩容</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p class="muted">系统镜像选 <b>Ubuntu 22.04 / 24.04 LTS</b> 或 Debian 12，社区资料最多。不要选带图形界面的镜像，浪费内存。</p>
+
+    <h3>第一次登录后必须做的三件事</h3>
+    <div class="code">
+      <div class="code__head"><span class="code__dots"><i></i><i></i><i></i></span><span class="code__lang">Bash · 服务器初始化（Ubuntu，以 root 执行）</span></div>
+      <pre><code># ---------- 1. 创建日常用户，禁用 root 远程登录 ----------
+adduser deploy
+usermod -aG sudo deploy
+
+# 把你本机的公钥装到 deploy 用户下（本机执行）
+# ssh-keygen -t ed25519 -C "your@email.com"   # 若还没有密钥则先生成
+# ssh-copy-id deploy@123.45.67.89
+
+# 修改 SSH 配置：禁用密码登录与 root 直连
+sed -i 's/^#\?PermitRootLogin.*/PermitRootLogin no/'      /etc/ssh/sshd_config
+sed -i 's/^#\?PasswordAuthentication.*/PasswordAuthentication no/' /etc/ssh/sshd_config
+systemctl restart ssh
+# ⚠️ 重启前务必另外开一个终端确认新用户能正常登录，否则会被锁在外面
+
+# ---------- 2. 防火墙：只开必要端口 ----------
+apt update && apt install -y ufw
+ufw default deny incoming
+ufw default allow outgoing
+ufw allow 22/tcp
+ufw allow 80/tcp
+ufw allow 443/tcp
+ufw --force enable
+ufw status verbose
+# 云服务器还要在控制台的"安全组"里做同样配置，两层都要开
+
+# ---------- 3. 自动安全更新 + 基础工具 ----------
+apt install -y unattended-upgrades curl git vim htop
+dpkg-reconfigure --priority=low unattended-upgrades
+timedatectl set-timezone Asia/Shanghai
+
+# 防暴力破解（可选但推荐）
+apt install -y fail2ban
+systemctl enable --now fail2ban</code></pre>
+    </div>
+
+    <div class="callout callout--danger">
+      <span class="callout__ico">🔐</span>
+      <div>
+        <strong>服务器被入侵的最常见原因</strong>
+        <p>① root 允许密码登录 + 弱密码 → 被扫描爆破；② 数据库 3306 端口对公网开放 → 直接被拖库；③ Redis 无密码且对外暴露 → 被写入公钥或挖矿脚本。
+        <b>记住一条铁律：除 80/443/22（且 22 最好换成非标端口）之外的端口，一律不对公网开放。</b>数据库只监听 <code>127.0.0.1</code>，或放在内网。</p>
+      </div>
+    </div>
+
+    <h2 id="runtime">四、运行时与进程守护</h2>
+    <p>应用代码放上去后，需要一个"看门人"保证它一直在跑、崩溃能自动重启、开机能自动启动。三种主流方案：</p>
+
+    <div class="tabs">
+      <div class="tabs__bar" role="tablist">
+        <button class="tab-btn is-active" role="tab" aria-selected="true" type="button">systemd</button>
+        <button class="tab-btn" role="tab" aria-selected="false" type="button">PM2</button>
+        <button class="tab-btn" role="tab" aria-selected="false" type="button">Docker</button>
+      </div>
+
+      <div class="tab-panel is-active">
+        <p>Linux 原生方案，零额外依赖，最通用。适用于 Go / Java / Python / Node 等任何可执行程序。</p>
+        <div class="code">
+          <div class="code__head"><span class="code__lang">INI · /etc/systemd/system/myapp.service</span></div>
+          <pre><code>[Unit]
+Description=My App
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=deploy
+WorkingDirectory=/opt/myapp
+ExecStart=/usr/bin/node /opt/myapp/dist/server.js
+EnvironmentFile=/opt/myapp/.env
+Restart=always
+RestartSec=3
+StandardOutput=append:/var/log/myapp/out.log
+StandardError=append:/var/log/myapp/err.log
+
+# 基础加固：限制权限，降低被攻破后的影响面
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ReadWritePaths=/var/log/myapp
+
+[Install]
+WantedBy=multi-user.target</code></pre>
+        </div>
+        <div class="code">
+          <div class="code__head"><span class="code__lang">Bash · 启用与查看</span></div>
+          <pre><code>sudo mkdir -p /var/log/myapp && sudo chown deploy:deploy /var/log/myapp
+sudo systemctl daemon-reload
+sudo systemctl enable --now myapp
+sudo systemctl status myapp
+journalctl -u myapp -f --since '10 min ago'</code></pre>
+        </div>
+      </div>
+
+      <div class="tab-panel">
+        <p>Node.js 生态的进程管理器，支持集群模式（多核利用）、日志切割与零停机重载。</p>
+        <div class="code">
+          <div class="code__head"><span class="code__lang">Bash · PM2 常用命令</span></div>
+          <pre><code>npm i -g pm2
+
+# 以集群模式启动，自动用满 CPU 核心（Node 单线程需要多进程才吃满多核）
+pm2 start dist/server.js --name myapp -i max
+
+pm2 logs myapp --lines 100      # 看日志
+pm2 monit                       # 实时资源面板
+pm2 reload myapp                # 零停机重载（逐个重启 worker）
+pm2 save                        # 保存当前进程列表
+pm2 startup                     # 生成开机自启配置（按提示执行输出的命令）
+
+# ecosystem.config.js 可把配置写进版本控制
+# module.exports = { apps: [{ name:'myapp', script:'dist/server.js',
+#   instances:'max', exec_mode:'cluster', max_memory_restart:'400M',
+#   env_production:{ NODE_ENV:'production', PORT:3000 } }] }</code></pre>
+        </div>
+      </div>
+
+      <div class="tab-panel">
+        <p>推荐方案：应用只关心自己的镜像，运行环境由镜像保证，重启策略交给 Docker。</p>
+        <div class="code">
+          <div class="code__head"><span class="code__lang">Bash · Dockerfile 编写与运行</span></div>
+          <pre><code># ---------- 多阶段构建：镜像更小、更安全 ----------
+FROM node:20-alpine AS deps
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci --omit=dev            # 只装生产依赖
+
+FROM node:20-alpine AS build
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci
+COPY . .
+RUN npm run build                # 前端/TS 构建产物
+
+FROM node:20-alpine
+WORKDIR /app
+ENV NODE_ENV=production
+COPY --from=deps  /app/node_modules ./node_modules
+COPY --from=build /app/dist ./dist
+COPY package.json ./
+
+# 不要用 root 运行应用
+USER node
+EXPOSE 3000
+CMD ["node", "dist/server.js"]
+
+# 构建与运行
+docker build -t myapp:1.0.0 .
+docker run -d --name myapp --restart unless-stopped \
+  -p 127.0.0.1:3000:3000 --env-file .env myapp:1.0.0
+# 注意 -p 只绑定 127.0.0.1：应用不需要对公网暴露，Nginx 在同一台机器上访问它</code></pre>
+        </div>
+        <p class="muted">务必写 <code>.dockerignore</code>：排除 <code>node_modules</code>、<code>.git</code>、<code>.env</code>、日志目录。否则构建上下文会传输几百 MB，且可能把密钥烤进镜像层。</p>
+      </div>
+    </div>
+
+    <h2 id="nginx">五、Nginx：网关与静态资源</h2>
+    <p>Nginx 承担三件事：<b>TLS 终止</b>、<b>反向代理</b>、<b>静态资源服务与压缩</b>。它是整套部署里唯一必须对公网开放的服务。</p>
+
+    <div class="code">
+      <div class="code__head"><span class="code__dots"><i></i><i></i><i></i></span><span class="code__lang">Bash · 安装</span></div>
+      <pre><code>sudo apt install -y nginx
+sudo systemctl enable --now nginx
+nginx -v && nginx -t          # 查看版本 / 检查配置语法</code></pre>
+    </div>
+
+    <div class="code">
+      <div class="code__head"><span class="code__dots"><i></i><i></i><i></i></span><span class="code__lang">Nginx · /etc/nginx/sites-available/myapp.conf</span></div>
+      <pre><code># ---------- 上游：应用服务 ----------
+upstream app_backend {
+    server 127.0.0.1:3000;
+    keepalive 32;                       # 与后端保持长连接，降低握手开销
+}
+
+# ---------- 80 端口：强制跳转 HTTPS ----------
+server {
+    listen 80;
+    listen [::]:80;
+    server_name example.com www.example.com;
+
+    # 保留证书续期验证路径，其余全部跳转
+    location /.well-known/acme-challenge/ { root /var/www/certbot; }
+    location / { return 301 https://$host$request_uri; }
+}
+
+# ---------- 443：主站 ----------
+server {
+    listen 443 ssl;
+    listen [::]:443 ssl;
+    http2 on;
+    server_name example.com www.example.com;
+
+    ssl_certificate     /etc/letsencrypt/live/example.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/example.com/privkey.pem;
+    ssl_protocols       TLSv1.2 TLSv1.3;
+    ssl_session_cache   shared:SSL:10m;
+    ssl_session_timeout 1d;
+
+    # 安全响应头
+    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header X-Frame-Options "SAMEORIGIN" always;
+    add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+
+    # 上传体积上限（默认 1M，上传图片/文件必须调大）
+    client_max_body_size 20m;
+
+    # ---------- 前端静态资源（构建产物）----------
+    root /var/www/myapp;
+    index index.html;
+
+    # 带 hash 的静态资源：永久缓存（文件内容变了文件名就变）
+    location /assets/ {
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+        access_log off;
+    }
+
+    # SPA 路由回退：前端路由由 JS 处理，找不到文件统一返回 index.html
+    location / {
+        try_files $uri $uri/ /index.html;
+        add_header Cache-Control "no-cache";     # HTML 不缓存，保证发版即时生效
+    }
+
+    # ---------- 后端接口 ----------
+    location /api/ {
+        proxy_pass http://app_backend;
+        proxy_http_version 1.1;
+        proxy_set_header Connection "";
+        proxy_set_header Host              $host;
+        proxy_set_header X-Real-IP         $remote_addr;
+        proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+
+        proxy_connect_timeout 5s;
+        proxy_send_timeout    60s;
+        proxy_read_timeout    60s;
+
+        # 简单限流：同一 IP 每分钟最多 300 次
+        limit_req zone=api_limit burst=50 nodelay;
+    }
+
+    # ---------- WebSocket（如有）----------
+    location /ws/ {
+        proxy_pass http://app_backend;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade    $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_read_timeout 3600s;      # 长连接要放宽超时，否则会莫名断开
+    }
+
+    location = /healthz { proxy_pass http://app_backend/healthz; access_log off; }
+}
+
+# 放在 http {} 块中（可写在 nginx.conf 顶部）
+# limit_req_zone $binary_remote_addr zone=api_limit:10m rate=300r/m;</code></pre>
+    </div>
+
+    <div class="code">
+      <div class="code__head"><span class="code__dots"><i></i><i></i><i></i></span><span class="code__lang">Bash · 启用站点与全局优化</span></div>
+      <pre><code>sudo ln -s /etc/nginx/sites-available/myapp.conf /etc/nginx/sites-enabled/
+sudo rm -f /etc/nginx/sites-enabled/default
+sudo nginx -t && sudo systemctl reload nginx     # reload 不中断现有连接
+
+# 在 /etc/nginx/nginx.conf 的 http{} 中加压缩（显著减小 JS/CSS 传输体积）
+# gzip on; gzip_comp_level 5; gzip_min_length 1024;
+# gzip_types text/plain text/css application/json application/javascript image/svg+xml;
+# brotli on;  # 若编译了 brotli 模块，压缩率比 gzip 更好
+
+# 日志：确认 X-Forwarded-For 生效后，用它替代 $remote_addr
+# log_format main '$remote_addr - $remote_user [$time_local] "$request" '
+#                 '$status $body_bytes_sent "$http_referer" '
+#                 '"$http_user_agent" rt=$request_time urt=$upstream_response_time';</code></pre>
+    </div>
+
+    <h2 id="https">六、HTTPS 证书</h2>
+    <p>Let's Encrypt 提供免费证书，90 天有效期，用 Certbot 可以全自动签发与续期。</p>
+
+    <div class="code">
+      <div class="code__head"><span class="code__dots"><i></i><i></i><i></i></span><span class="code__lang">Bash · 签发与自动续期</span></div>
+      <pre><code>sudo apt install -y certbot python3-certbot-nginx
+
+# Nginx 插件模式：自动修改配置完成验证
+sudo certbot --nginx -d example.com -d www.example.com --agree-tos -m you@example.com --no-eff-email
+
+# 仅申请证书（你自己已在 Nginx 里写好 ssl 配置时）
+sudo certbot certonly --webroot -w /var/www/certbot -d example.com
+
+# 验证自动续期是否配置好（certbot 会安装 timer，每天检查两次）
+sudo certbot renew --dry-run
+systemctl list-timers | grep certbot
+
+# 续期后需要重载 Nginx 才生效
+# /etc/letsencrypt/renewal-hooks/deploy/reload-nginx.sh
+#   #!/bin/sh
+#   systemctl reload nginx
+
+# 通配符证书需 DNS 验证，用 DNS 插件
+# sudo certbot certonly --manual --preferred-challenges dns -d '*.example.com'</code></pre>
+    </div>
+
+    <div class="callout callout--tip">
+      <span class="callout__ico">🔍</span>
+      <div>
+        <strong>证书过期是全站级事故</strong>
+        <p>用户会看到"您的连接不是私密连接"的红色警告页，无法继续访问。
+        <b>务必把"证书剩余有效期"加进监控</b>（低于 14 天报警）。同时确认 <code>certbot renew --dry-run</code> 成功，
+        因为一旦续期失败（例如 80 端口被安全组关闭），你只有在到期那天才发现。</p>
+      </div>
+    </div>
+
+    <h3>证书链不完整的坑</h3>
+    <div class="code">
+      <div class="code__head"><span class="code__dots"><i></i><i></i><i></i></span><span class="code__lang">Bash · 排查 TLS 问题</span></div>
+      <pre><code># 查看证书链、有效期、协议版本
+echo | openssl s_client -connect example.com:443 -servername example.com 2&gt;/dev/null \
+  | openssl x509 -noout -subject -issuer -dates
+
+# 必须用 fullchain.pem（含中间证书），只用 cert.pem 会导致部分安卓/旧设备报错
+# 常见症状：浏览器正常、手机 App 报 SSL handshake failed
+
+# 检查证书到期时间（做成监控脚本）
+openssl s_client -connect example.com:443 -servername example.com 2&gt;/dev/null \
+  | openssl x509 -noout -enddate
+
+# 测试 TLS 配置评级（需外网可达）
+# curl -s https://api.ssllabs.com/api/v3/analyze?host=example.com | head -50</code></pre>
+    </div>
+
+    <h2 id="docker">七、Docker Compose 编排完整栈</h2>
+    <p>当项目包含应用 + 数据库 + Redis + 反向代理时，<code>docker compose</code> 是单机部署的最优解：一份文件描述整个系统，一条命令启动。</p>
+
+    <div class="code">
+      <div class="code__head"><span class="code__dots"><i></i><i></i><i></i></span><span class="code__lang">YAML · docker-compose.yml</span></div>
+      <pre><code>services:
+  app:
+    image: registry.example.com/myapp:${TAG:-latest}
+    # 或本地构建：build: { context: ./server, dockerfile: Dockerfile }
+    restart: unless-stopped
+    env_file: [.env]
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgres://app:${DB_PASSWORD}@db:5432/mydb
+      REDIS_URL: redis://cache:6379
+    depends_on:
+      db:    { condition: service_healthy }
+      cache: { condition: service_started }
+    # 关键：应用只在内部网络暴露，由 nginx 访问
+    expose: ["3000"]
+    networks: [backend]
+    logging:                             # 限制日志体积，否则磁盘会被撑满
+      driver: json-file
+      options: { max-size: "10m", max-file: "3" }
+    deploy:
+      resources:
+        limits: { cpus: "1.0", memory: 512M }
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3000/healthz"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+
+  nginx:
+    image: nginx:1.27-alpine
+    restart: unless-stopped
+    ports: ["80:80", "443:443"]
+    volumes:
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      - ./static:/var/www/myapp:ro           # 前端构建产物
+      - certbot-web:/var/www/certbot
+      - letsencrypt:/etc/letsencrypt:ro
+    depends_on: [app]
+    networks: [backend]
+
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: mydb
+      POSTGRES_USER: app
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?数据库密码必须设置}   # 缺失则启动失败，避免空密码上线
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U app -d mydb"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks: [backend]
+    # 注意：不写 ports，数据库就不对宿主机与公网暴露
+
+  cache:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes", "--maxmemory", "256mb",
+              "--maxmemory-policy", "allkeys-lru"]
+    volumes: [redisdata:/data]
+    networks: [backend]
+
+  certbot:
+    image: certbot/certbot
+    volumes:
+      - certbot-web:/var/www/certbot
+      - letsencrypt:/etc/letsencrypt
+    entrypoint: >
+      sh -c "trap exit TERM;
+             while :; do certbot renew --webroot -w /var/www/certbot --quiet;
+             sleep 12h & sleep 43200 & wait $${!}; done"
+
+volumes:
+  pgdata:
+  redisdata:
+  certbot-web:
+  letsencrypt:
+
+networks:
+  backend:
+    driver: bridge</code></pre>
+    </div>
+
+    <div class="code">
+      <div class="code__head"><span class="code__dots"><i></i><i></i><i></i></span><span class="code__lang">Bash · 日常操作命令</span></div>
+      <pre><code>docker compose up -d              # 后台启动全部服务
+docker compose ps                 # 查看状态与健康检查结果
+docker compose logs -f app        # 跟踪某个服务日志
+docker compose pull && docker compose up -d    # 拉新镜像并滚动更新
+
+docker compose exec db psql -U app -d mydb     # 进数据库
+docker compose exec app sh                     # 进应用容器排查
+
+docker system df                  # 磁盘占用总览（镜像/容器/卷）
+docker image prune -a -f          # 清理未被使用的镜像
+
+# ⚠️ 千万不要执行 docker compose down -v —— -v 会删除数据卷，数据库直接清空</code></pre>
+    </div>
+
+    <div class="callout callout--danger">
+      <span class="callout__ico">💾</span>
+      <div>
+        <strong>容器化最容易被忽视的一点：数据在卷里</strong>
+        <p>容器可以被随意删除重建，但 <code>pgdata</code> 卷不能。备份必须备份<b>卷里的数据</b>（用 <code>pg_dump</code> 导出），而不是备份容器。
+        另外：<code>docker compose down -v</code> 和手输 <code>docker volume rm</code> 都是"删库"级别操作，建议在 shell 里给它们设别名加确认。</p>
+      </div>
+    </div>
+
+    <h2 id="cicd">八、CI/CD：把部署变成推送</h2>
+    <p>目标：<code>git push</code> 之后，自动跑测试 → 构建镜像 → 推送到镜像仓库 → 部署到服务器。全程无人值守，且任何一步失败都能自动中止。</p>
+
+    <div class="code">
+      <div class="code__head"><span class="code__dots"><i></i><i></i><i></i></span><span class="code__lang">YAML · .github/workflows/deploy.yml</span></div>
+      <pre><code>name: Build and Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:            # 允许手动触发
+
+concurrency:                    # 同一时间只允许一个部署任务，避免并发打架
+  group: production
+  cancel-in-progress: false
+
+env:
+  IMAGE: ${{ secrets.REGISTRY_HOST }}/myapp
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: test
+        ports: ["5432:5432"]
+        options: &gt;-
+          --health-cmd pg_isready --health-interval 10s
+          --health-timeout 5s --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 20, cache: npm }
+      - run: npm ci
+      - run: npm run lint
+      - run: npm test
+        env:
+          DATABASE_URL: postgres://postgres:test@localhost:5432/test
+
+  build:
+    needs: test                 # 测试不过就不构建，从源头拦截
+    runs-on: ubuntu-latest
+    permissions: { contents: read, packages: write }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ${{ secrets.REGISTRY_HOST }}
+          username: ${{ secrets.REGISTRY_USER }}
+          password: ${{ secrets.REGISTRY_TOKEN }}
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: |
+            ${{ env.IMAGE }}:latest
+            ${{ env.IMAGE }}:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: 通过 SSH 部署
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          script: |
+            set -euo pipefail
+            cd /opt/myapp
+
+            # 部署前先导出容器内的旧镜像 ID，用于回滚
+            PREV=$(docker compose images -q app | head -1) || true
+            echo "$PREV" &gt; .last_image
+
+            echo "${{ secrets.REGISTRY_TOKEN }}" | docker login ${{ secrets.REGISTRY_HOST }} -u ${{ secrets.REGISTRY_USER }} --password-stdin
+            TAG=${{ github.sha }} docker compose pull app
+            TAG=${{ github.sha }} docker compose up -d --no-deps app
+
+            # 健康检查：最多等 60 秒，失败就自动回滚
+            for i in $(seq 1 12); do
+              if curl -fsS http://127.0.0.1:3000/healthz &gt;/dev/null; then
+                echo "部署成功"; exit 0
+              fi
+              echo "等待服务就绪... ($i/12)"; sleep 5
+            done
+
+            echo "健康检查失败，执行回滚"
+            docker tag "$PREV" myapp:rollback &amp;&amp; docker compose up -d --no-deps app
+            exit 1</code></pre>
+    </div>
+
+    <div class="callout callout--warn">
+      <span class="callout__ico">🔑</span>
+      <div>
+        <strong>Secrets 的正确用法</strong>
+        <p>所有敏感值放仓库的 <code>Settings → Secrets and variables → Actions</code>，代码里只引用 <code>${{ secrets.XXX }}</code>。
+        SSH 私钥建议<b>单独生成一对专用于部署的密钥</b>，并在服务器上限制该密钥只能执行部署脚本（<code>command="..."</code> 或专用用户），
+        一旦泄露影响面可控。</p>
+      </div>
+    </div>
+
+    <h2 id="strategy">九、发布策略与回滚</h2>
+
+    <div class="table-wrap">
+      <table class="table-key">
+        <thead><tr><th>策略</th><th>做法</th><th>优点</th><th>缺点</th></tr></thead>
+        <tbody>
+          <tr><td>停机发布</td><td>停旧 → 启新</td><td>最简单</td><td>有中断，个人项目可接受</td></tr>
+          <tr><td>滚动更新</td><td>逐个替换实例</td><td>无中断，资源占用小</td><td>新旧版本短时共存</td></tr>
+          <tr><td>蓝绿部署</td><td>新旧两套环境，切流量</td><td>秒级切换与回滚</td><td>需要双倍资源</td></tr>
+          <tr><td>灰度 / 金丝雀</td><td>先放 5% 流量到新版本</td><td>风险可控，可观测验证</td><td>需要流量路由能力</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout callout--tip">
+      <span class="callout__ico">↩️</span>
+      <div>
+        <strong>回滚必须比发布更快</strong>
+        <p>发版出问题时，最快的恢复手段永远是<b>切回上一个已知可用的镜像</b>，而不是紧急修 bug 重新构建。
+        所以镜像必须带版本标签（用 commit SHA，不要只推 <code>latest</code>），并保留最近 5 个版本，回滚一条命令即可完成。</p>
+      </div>
+    </div>
+
+    <h3>数据库变更与代码发布的兼容问题</h3>
+    <p>代码可以秒回滚，数据库结构不能。所以涉及表结构变更时，必须<b>分两次发布</b>，保证任意时刻新旧代码都能运行：</p>
+    <ol class="steps">
+      <li><h4>扩：加上新列/新表</h4><p>新列必须有默认值或允许 NULL。部署后旧代码照常运行（不认识新列，无影响）。</p></li>
+      <li><h4>写：双写数据</h4><p>发布新代码，同时写入新旧两处，读取仍走旧字段。观察一段时间确认无异常。</p></li>
+      <li><h4>迁：回填历史数据</h4><p>用后台脚本分批把旧数据搬到新字段，注意限速避免拖垮数据库。</p></li>
+      <li><h4>读：切换读取来源</h4><p>改为读新字段。此时新列完全生效，观察一个版本周期。</p></li>
+      <li><h4>收：删除旧列</h4><p>确认不再有任何代码引用后，最后再删。删除操作本身要留出回滚窗口（可先重命名归档）。</p></li>
+    </ol>
+
+    <h2 id="platform">十、托管平台怎么选</h2>
+    <div class="table-wrap">
+      <table class="table-key">
+        <thead><tr><th>项目类型</th><th>推荐方案</th><th>成本</th><th>说明</th></tr></thead>
+        <tbody>
+          <tr><td>纯静态（博客/文档/落地页）</td><td>Cloudflare Pages / Vercel / GitHub Pages</td><td>免费</td><td>自带 CDN 与 HTTPS，推代码即上线</td></tr>
+          <tr><td>前端 + Serverless 接口</td><td>Vercel / Netlify Functions</td><td>免费额度起步</td><td>无需管理服务器，注意冷启动与执行时长限制</td></tr>
+          <tr><td>全栈小项目</td><td>单台云服务器 + Docker Compose</td><td>每月 ¥30～80</td><td>学习价值最高，掌控力最强</td></tr>
+          <tr><td>需要托管数据库</td><td>云厂商 RDS / PlanetScale / Neon</td><td>按量付费</td><td>免去自建备份与主从，省心</td></tr>
+          <tr><td>容器集群</td><td>K8s（云托管）</td><td>较高</td><td>团队规模不够时不要碰</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout callout--info">
+      <span class="callout__ico">🧮</span>
+      <div>
+        <strong>给初学者的建议</strong>
+        <p>先用托管平台把第一个项目上线（体验完整流程），再买一台最便宜的云服务器，把手动部署、Nginx、HTTPS、Docker 全部走一遍。
+        <b>亲手踩过一次坑的知识，才算真的会。</b>之后再决定生产环境用托管还是自建。</p>
+      </div>
+    </div>
+
+    <h2 id="checklist">十一、上线检查清单</h2>
+    <p>每次发布前过一遍，能避免 80% 的线上事故。</p>
+
+    <h3>发布前</h3>
+    <ul class="checklist">
+      <li>本地 <code>npm run build</code> 成功，无构建警告</li>
+      <li>测试全部通过，关键路径已手工验证（登录、下单、支付回调）</li>
+      <li>数据库迁移脚本已在预发环境执行过，且<b>回滚方案已确认</b></li>
+      <li><code>.env.example</code> 已同步新增的环境变量，生产环境变量已配置</li>
+      <li>镜像已打上本次 commit SHA 标签并推送成功</li>
+      <li>确认没有把 <code>.env</code>、密钥、调试代码提交进仓库</li>
+    </ul>
+
+    <h3>发布后 5 分钟内</h3>
+    <ul class="checklist">
+      <li>访问首页、登录、核心业务接口，全部正常（用真实浏览器，不只 curl）</li>
+      <li>查看应用日志无异常堆栈，错误率没有上升</li>
+      <li>查看 Nginx 日志，<b>5xx 数量没有突增</b></li>
+      <li>接口响应时间与发布前持平</li>
+      <li>移动端（真机 4G 网络）访问正常</li>
+      <li>监控面板无新告警</li>
+    </ul>
+
+    <h3>部署环境的硬性要求</h3>
+    <div class="table-wrap">
+      <table class="table-key">
+        <thead><tr><th>项目</th><th>要求</th></tr></thead>
+        <tbody>
+          <tr><td>HTTPS</td><td>全站强制，HTTP 301 跳转，HSTS 开启</td></tr>
+          <tr><td>端口暴露</td><td>公网仅 80/443；数据库与 Redis 只在内网</td></tr>
+          <tr><td>进程守护</td><td>重启策略为 always / unless-stopped</td></tr>
+          <tr><td>日志</td><td>结构化输出 + 轮转限制（max-size / max-file）</td></tr>
+          <tr><td>资源限制</td><td>容器设置内存上限，避免单服务吃满整机</td></tr>
+          <tr><td>健康检查</td><td><code>/healthz</code> 可用，且被编排与监控引用</td></tr>
+          <tr><td>备份</td><td>数据库每日自动备份并<b>验证过可恢复</b></td></tr>
+          <tr><td>回滚</td><td>保留最近 5 个镜像版本，回滚命令已演练过</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout callout--tip">
+      <span class="callout__ico">🧭</span>
+      <div>
+        <strong>下一步</strong>
+        <p>网站上线了。接下来它会面临磁盘写满、内存泄漏、证书过期、被扫描攻击、半夜报警 —— 进入 <a href="ops.html">运维思路</a>。</p>
+      </div>
+    </div>
+
+    <div class="pager">
+      <a class="prev" href="architecture.html"><span>上一篇</span><b>← 搭建思路</b></a>
+      <a class="next" href="ops.html"><span>下一篇</span><b>运维思路 →</b></a>
+    </div>
+  </main>
+
+  <aside class="toc" aria-label="本页目录"></aside>
+</div>
+
+<div class="mask"></div>
+
+<footer class="footer">
+  <div class="footer__grid">
+    <div>
+      <h5>基础篇</h5>
+      <ul>
+        <li><a href="frontend.html">前端基础</a></li>
+        <li><a href="languages.html">后端语言选型</a></li>
+      </ul>
+    </div>
+    <div>
+      <h5>工程篇</h5>
+      <ul>
+        <li><a href="architecture.html">搭建思路</a></li>
+        <li><a href="deployment.html">部署思路</a></li>
+        <li><a href="ops.html">运维思路</a></li>
+      </ul>
+    </div>
+    <div>
+      <h5>本页速查</h5>
+      <ul>
+        <li><a href="#nginx">Nginx 配置模板</a></li>
+        <li><a href="#docker">Compose 编排</a></li>
+        <li><a href="#cicd">CI/CD 脚本</a></li>
+        <li><a href="#checklist">上线检查清单</a></li>
+      </ul>
+    </div>
+    <div>
+      <h5>关于</h5>
+      <ul>
+        <li><a href="../index.html#principles">六条核心原则</a></li>
+        <li><a href="../index.html#faq">常见问题</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="footer__bottom">
+    <span>网站开发基础教程 · 部署思路</span>
+    <span>快捷键 <code>/</code> 搜索章节</span>
+  </div>
+</footer>
+
+<script src="../assets/js/main.js"></script>
+</body>
+</html>
